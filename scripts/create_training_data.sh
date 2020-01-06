@@ -1,9 +1,9 @@
-BERT_BASE_DIR=uncased_L-12_H-768_A-12
+BERT_BASE_DIR=gs://cloud-tpu-checkpoints/bert/uncased_L-12_H-768_A-12
 
-MENTIONS=$ZESHEL_DATA/mentions
-DOCUMENTS=$ZESHEL_DATA/documents
-TFIDF_CANDIDATES=$ZESHEL_DATA/tfidf_candidates
-OUTPUT_DIR=/tmp/TFRecords/mentions
+MENTIONS=gs://zero_shot_entity_link/mentions
+DOCUMENTS=gs://zero_shot_entity_link/documents
+TFIDF_CANDIDATES=gs://zero_shot_entity_link/tfidf_candidates
+OUTPUT_DIR=gs://zero_shot_entity_link/tmp/TFRecords/mentions
 
 train_domains=("american_football" "doctor_who" "fallout" "final_fantasy" "military" "pro_wrestling" "starwars" "world_of_warcraft")
 val_domains=("coronation_street" "elder_scrolls" "ice_hockey" "muppets")
