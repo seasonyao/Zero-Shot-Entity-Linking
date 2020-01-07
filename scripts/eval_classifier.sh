@@ -1,14 +1,13 @@
-BERT_BASE_DIR=uncased_L-12_H-768_A-12
-EXPTS_DIR=/tmp
-TFRecords=/tmp/TFRecords/mentions
+BERT_BASE_DIR=gs://cloud-tpu-checkpoints/bert/uncased_L-12_H-768_A-12
+EXPTS_DIR=gs://zero_shot_entity_link/tmp
+TFRecords=gs://zero_shot_entity_link/data
 USE_TPU=true
-TPU_NAME=tpu0
 
-domain='test/forgotten_realms'
+domain='val/elder_scrolls'
 
 EXP_NAME=BERT_fntn
 
-python run_classifier.py \
+python3 run_classifier.py \
   --do_train=false \
   --do_eval=true \
   --data_dir=$TFRecords \
@@ -20,4 +19,4 @@ python run_classifier.py \
   --eval_domain=$domain \
   --use_tpu=$USE_TPU \
   --tpu_name=$TPU_NAME \
-	--output_eval_file /tmp/eval.txt
+	--output_eval_file gs://zero_shot_entity_link/tmp/eval.txt

@@ -1,6 +1,6 @@
 BERT_BASE_DIR=gs://cloud-tpu-checkpoints/bert/uncased_L-12_H-768_A-12
 EXPTS_DIR=gs://zero_shot_entity_link/tmp
-TFRecords=gs://zero_shot_entity_link/tmp/data
+TFRecords=gs://zero_shot_entity_link/data
 USE_TPU=true
 
 EXP_NAME=BERT_fntn
