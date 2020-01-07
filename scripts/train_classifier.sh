@@ -1,13 +1,12 @@
-BERT_BASE_DIR=uncased_L-12_H-768_A-12
-EXPTS_DIR=/tmp
-TFRecords=/tmp/TFRecords/mentions/train
+BERT_BASE_DIR=gs://cloud-tpu-checkpoints/bert/uncased_L-12_H-768_A-12
+EXPTS_DIR=gs://zero_shot_entity_link/tmp
+TFRecords=gs://zero_shot_entity_link/tmp/data
 USE_TPU=true
-TPU_NAME=tpu0
 
 EXP_NAME=BERT_fntn
 INIT=$BERT_BASE_DIR/bert_model.ckpt 
 
-python run_classifier.py \
+python3 run_classifier.py \
   --do_train=true \
   --do_eval=false \
   --data_dir=$TFRecords \
