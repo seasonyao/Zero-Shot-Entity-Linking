@@ -343,9 +343,9 @@ def model_fn_builder(albert_config, init_checkpoint, learning_rate,
             "eval_loss": loss,
         }
 
-      eval_metrics = metric_fn(per_example_loss, label_ids, logits)
-      #eval_metrics = (metric_fn,
-      #                [per_example_loss, label_ids, logits])
+      #eval_metrics = metric_fn(per_example_loss, label_ids, logits)
+      eval_metrics = (metric_fn,
+                     [per_example_loss, label_ids, logits])
       output_spec = tf.contrib.tpu.TPUEstimatorSpec(
           mode=mode,
           loss=total_loss,
@@ -364,7 +364,7 @@ def model_fn_builder(albert_config, init_checkpoint, learning_rate,
 #           mode=mode,
 #           predictions={"probabilities": probabilities})
       predictions = tf.argmax(logits, axis=-1, output_type=tf.int32)
-      output_spec = tf.estimator.EstimatorSpec(
+      output_spec = tf.contrib.tpu.TPUEstimatorSpec(
           mode=mode,
           predictions={"probabilities": probabilities,
                        "predictions": predictions,
