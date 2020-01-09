@@ -112,13 +112,13 @@ flags.DEFINE_float(
     "Proportion of training to perform linear learning rate warmup for. "
     "E.g., 0.1 = 10% of training.")
 
-flags.DEFINE_integer("save_checkpoints_steps", 6000,
+flags.DEFINE_integer("save_checkpoints_steps", 3000,
                      "How often to save the model checkpoint.")
 
 flags.DEFINE_integer("keep_checkpoint_max", 5,
                      "How many checkpoints to keep.")
 
-flags.DEFINE_integer("iterations_per_loop", 6000,
+flags.DEFINE_integer("iterations_per_loop", 3000,
                      "How many steps to make in each estimator call.")
 
 flags.DEFINE_bool("use_tpu", False, "Whether to use TPU or GPU/CPU.")
@@ -520,7 +520,8 @@ def main(_):
       tf.logging.info("  %s = %s", key, str(result[key]))
 
   if FLAGS.do_predict:
-    predict_file = os.path.join(FLAGS.data_dir, FLAGS.eval_domain + ".tfrecord")
+    #predict_file = os.path.join(FLAGS.data_dir, FLAGS.eval_domain + ".tfrecord")
+    predict_file = os.path.join(FLAGS.data_dir, "train_albert_ms256.tfrecord")
     #predict_file = "tmp/my_train_data/train_section10.tfrecord"
     tf.logging.info(predict_file)
     tf.logging.info("***** Running prediction*****")
