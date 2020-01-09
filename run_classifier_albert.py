@@ -451,7 +451,7 @@ def main(_):
   #     params={"batch_size": FLAGS.train_batch_size})
 
   if FLAGS.do_train:
-    train_file = os.path.join(FLAGS.data_dir, "train.tfrecord")
+    train_file = os.path.join(FLAGS.data_dir, "train_albert_ms256.tfrecord")
     #train_file = "tmp/this_time_hard_negative_data.tfrecord"
     #train_file = "train_section.tfrecord"
     
@@ -533,7 +533,7 @@ def main(_):
         seq_length=FLAGS.max_seq_length,
         is_training=False,
         drop_remainder=predict_drop_remainder,
-        task_name=task_name,
+        task_name=FLAGS.task_name,
         use_tpu=FLAGS.use_tpu,
         bsz=FLAGS.train_batch_size)
         
