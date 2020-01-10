@@ -454,16 +454,17 @@ def main(_):
   #     save_summary_steps=100,
   #     save_checkpoints_steps=1000)
 
-  train_examples = None
+  num_train_examples = FLAGS.num_train_examples
   num_train_steps = None
   num_warmup_steps = None
   if FLAGS.do_train:
-    num_train_examples = 50000
-#     num_train_steps = 50224+5224
-#     num_warmup_steps = 0
     num_train_steps = int(
         num_train_examples / FLAGS.train_batch_size * FLAGS.num_train_epochs)
     num_warmup_steps = int(num_train_steps * FLAGS.warmup_proportion)
+
+    if 1:                                       #if hnm
+      num_train_steps = num_train_steps + 18750
+      num_warmup_steps=0
 
 
   model_fn = model_fn_builder(
@@ -490,9 +491,10 @@ def main(_):
   #     params={"batch_size": FLAGS.train_batch_size})
 
   if FLAGS.do_train:
-    train_file = os.path.join(FLAGS.data_dir, "train_albert_ms256.tfrecord")
-    #train_file = "tmp/this_time_hard_negative_data.tfrecord"
-    #train_file = "train_section.tfrecord"
+    #normal training
+    #train_file = os.path.join(FLAGS.data_dir, "train_albert_ms256.tfrecord")
+    #hnm training
+    train_file = os.path.join(FLAGS.data_dir, "train_albert_ms256_hnmdata_after18750.tfrecord")
     
     tf.logging.info("***** Running training *****")
     tf.logging.info("  Train file= %s", train_file)
@@ -514,7 +516,6 @@ def main(_):
 
   if FLAGS.do_eval:
     eval_file = os.path.join(FLAGS.data_dir, FLAGS.eval_domain + ".tfrecord")
-    #eval_file = "train_section.tfrecord"
 
     tf.logging.info("***** Running evaluation *****")
     tf.logging.info("  Batch size = %d", FLAGS.eval_batch_size)
@@ -559,9 +560,10 @@ def main(_):
       tf.logging.info("  %s = %s", key, str(result[key]))
 
   if FLAGS.do_predict:
-    #predict_file = os.path.join(FLAGS.data_dir, FLAGS.eval_domain + ".tfrecord")
-    predict_file = os.path.join(FLAGS.data_dir, "train_albert_ms256.tfrecord")
-    #predict_file = "tmp/my_train_data/train_section10.tfrecord"
+    #predict the val data
+    predict_file = os.path.join(FLAGS.data_dir, FLAGS.eval_domain + ".tfrecord")
+    #predict training data for hnm
+    #predict_file = os.path.join(FLAGS.data_dir, "train_albert_ms256.tfrecord")
     tf.logging.info(predict_file)
     tf.logging.info("***** Running prediction*****")
     tf.logging.info("  Batch size = %d", FLAGS.eval_batch_size)
