@@ -266,35 +266,35 @@ def create_zeshel_model(albert_config, is_training, input_ids, input_mask,
       # I.e., 0.1 dropout
       output_layer = tf.nn.dropout(output_layer, keep_prob=0.9)
     # without addictive_margin
-    # logits = tf.matmul(output_layer, output_weights, transpose_b=True)
-    # logits = tf.nn.bias_add(logits, output_bias)
-    # logits = tf.reshape(logits, [-1, num_labels])
-
-    # probabilities = tf.nn.softmax(logits, axis=-1)
-
-    # per_example_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
-    #     logits=logits, labels=labels)
-
-    # loss = tf.reduce_mean(per_example_loss)
-
-    #with addictive_margin
-    l2norm_output_layer = tf.nn.l2_normalize(output_layer,axis=1,name="l2norm_output_layer")
-    l2norm_output_weights = tf.nn.l2_normalize(output_weights,axis=0,name="l2norm_output_weights")
-
-    logits = tf.matmul(l2norm_output_layer, l2norm_output_weights, transpose_b=True)
+    logits = tf.matmul(output_layer, output_weights, transpose_b=True)
     logits = tf.nn.bias_add(logits, output_bias)
     logits = tf.reshape(logits, [-1, num_labels])
-    
-    one_hot_labels = tf.one_hot(labels, depth=num_labels, dtype=tf.float32)
-    
-    addictive_embedding_feature = add_addictive_margin(logits, one_hot_labels, labels, \
-                                                   scale=10.,margin=-0.1,name="add_addictive_margin")
-    
-    probabilities = tf.nn.softmax(logits, axis=-1)
-    log_probs = tf.nn.log_softmax(logits, axis=-1)
 
-    per_example_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=addictive_embedding_feature, labels=labels)
+    probabilities = tf.nn.softmax(logits, axis=-1)
+
+    per_example_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
+        logits=logits, labels=labels)
+
     loss = tf.reduce_mean(per_example_loss)
+
+    #with addictive_margin
+    # l2norm_output_layer = tf.nn.l2_normalize(output_layer,axis=1,name="l2norm_output_layer")
+    # l2norm_output_weights = tf.nn.l2_normalize(output_weights,axis=0,name="l2norm_output_weights")
+
+    # logits = tf.matmul(l2norm_output_layer, l2norm_output_weights, transpose_b=True)
+    # logits = tf.nn.bias_add(logits, output_bias)
+    # logits = tf.reshape(logits, [-1, num_labels])
+    
+    # one_hot_labels = tf.one_hot(labels, depth=num_labels, dtype=tf.float32)
+    
+    # addictive_embedding_feature = add_addictive_margin(logits, one_hot_labels, labels, \
+    #                                                scale=10.,margin=-0.1,name="add_addictive_margin")
+    
+    # probabilities = tf.nn.softmax(logits, axis=-1)
+    # log_probs = tf.nn.log_softmax(logits, axis=-1)
+
+    # per_example_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=addictive_embedding_feature, labels=labels)
+    # loss = tf.reduce_mean(per_example_loss)
 
     return (loss, per_example_loss, logits, probabilities)
 
