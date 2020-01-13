@@ -357,7 +357,8 @@ def main(_):
       tpu_config=tf.estimator.tpu.TPUConfig(
           iterations_per_loop=FLAGS.iterations_per_loop,
           per_host_input_for_training=is_per_host,
-          ))
+          num_cores_per_replica=8,
+          input_partition_dims = [{'input_ids': [1,8,1], 'input_mask': [1,8,1], 'segment_ids': [1,8,1], 'mention_id': [1,8,1]}, 'label_id': {None}]))
 
   train_examples = None
   num_train_steps = None
