@@ -1,0 +1,3 @@
+m40 single tpu:
+		bert(max_sequence=256, batch_size only 2~3)
+		albert_base(max_sequence=256, batch_size about 7~8)
