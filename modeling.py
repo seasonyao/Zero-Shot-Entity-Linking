@@ -263,8 +263,7 @@ def embedding_postprocessor(input_tensor,
     # This vocab will be small so we always do one-hot here, since it is always
     # faster for a small vocabulary.
     flat_token_type_ids = tf.reshape(mention_ids, [-1, 1])
-    #change here
-    flat_token_type_ids = tf.cast(flat_token_type_ids, tf.bfloat16)
+    flat_token_type_ids = tf.cast(flat_token_type_ids, tf.float32)
     token_type_embeddings = tf.matmul(flat_token_type_ids, token_type_table)
     #one_hot_ids = tf.one_hot(flat_token_type_ids, depth=token_type_vocab_size)
     #token_type_embeddings = tf.matmul(one_hot_ids, token_type_table)
