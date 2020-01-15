@@ -349,6 +349,16 @@ def main(_):
         FLAGS.tpu_name, zone=FLAGS.tpu_zone, project=FLAGS.gcp_project)
 
   is_per_host = tf.estimator.tpu.InputPipelineConfig.PER_HOST_V2
+  # run_config = tf.estimator.tpu.RunConfig(
+  #     cluster=tpu_cluster_resolver,
+  #     master=FLAGS.master,
+  #     model_dir=FLAGS.output_dir,
+  #     save_checkpoints_steps=FLAGS.save_checkpoints_steps,
+  #     tpu_config=tf.estimator.tpu.TPUConfig(
+  #         iterations_per_loop=FLAGS.iterations_per_loop,
+  #         per_host_input_for_training=is_per_host,
+  #         num_cores_per_replica=8,
+  #         input_partition_dims = [{'input_ids': [1,8,1], 'input_mask': [1,8,1], 'segment_ids': [1,8,1], 'mention_id': [1,8,1]}, {'label_id': None}]))
   run_config = tf.estimator.tpu.RunConfig(
       cluster=tpu_cluster_resolver,
       master=FLAGS.master,
@@ -356,11 +366,8 @@ def main(_):
       save_checkpoints_steps=FLAGS.save_checkpoints_steps,
       tpu_config=tf.estimator.tpu.TPUConfig(
           iterations_per_loop=FLAGS.iterations_per_loop,
-          per_host_input_for_training=is_per_host,
-          num_cores_per_replica=8,
-          input_partition_dims = [{'input_ids': [1,8,1], 'input_mask': [1,8,1], 'segment_ids': [1,8,1], 'mention_id': [1,8,1]}, 'label_id': {None}]))
+          per_host_input_for_training=is_per_host))
 
-  train_examples = None
   num_train_steps = None
   num_warmup_steps = None
   if FLAGS.do_train:

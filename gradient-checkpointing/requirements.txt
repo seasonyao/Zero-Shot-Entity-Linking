@@ -1,0 +1,4 @@
+tensorflow-gpu
+pytest
+networkx
+toposort

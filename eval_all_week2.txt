@@ -1,3 +1,10 @@
 m40 single tpu:
-		bert(max_sequence=256, batch_size only 2~3)
-		albert_base(max_sequence=256, batch_size about 7~8)
+		bert(max_sequence=256, batch_size only 2~3, can16)
+		albert_base(max_sequence=256, batch_size about 7~8, can16)
+
+
+21.46G (1,8,1) in v3-8 bs=1
+135.99G (1,8,1) in v3-8 bs=8
+21.42G (1,1,1) in v3-8 bs=8
+21.42G nothing in v3-8 bs=8
+44.14G nothing in v3-8 bs=16
