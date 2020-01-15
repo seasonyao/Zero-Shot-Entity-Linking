@@ -20,14 +20,13 @@ from __future__ import print_function
 
 import re
 import tensorflow as tf
-from gradient_checkpointing.memory_saving_gradients import gradients
 
 
 def create_optimizer(loss, init_lr, num_train_steps, num_warmup_steps, use_tpu):
   """Creates an optimizer training op."""
   global_step = tf.train.get_or_create_global_step()
-
-  learning_rate = tf.constant(value=init_lr, shape=[], dtype=tf.float32)
+  #change here
+  learning_rate = tf.constant(value=init_lr, shape=[], dtype=tf.bfloat16)
 
   # Implements linear decay of the learning rate.
   learning_rate = tf.train.polynomial_decay(
@@ -43,14 +42,14 @@ def create_optimizer(loss, init_lr, num_train_steps, num_warmup_steps, use_tpu):
   if num_warmup_steps:
     global_steps_int = tf.cast(global_step, tf.int32)
     warmup_steps_int = tf.constant(num_warmup_steps, dtype=tf.int32)
-
-    global_steps_float = tf.cast(global_steps_int, tf.float32)
-    warmup_steps_float = tf.cast(warmup_steps_int, tf.float32)
+    #change here
+    global_steps_float = tf.cast(global_steps_int, tf.bfloat16)
+    warmup_steps_float = tf.cast(warmup_steps_int, tf.bfloat16)
 
     warmup_percent_done = global_steps_float / warmup_steps_float
     warmup_learning_rate = init_lr * warmup_percent_done
 
-    is_warmup = tf.cast(global_steps_int < warmup_steps_int, tf.float32)
+    is_warmup = tf.cast(global_steps_int < warmup_steps_int, tf.bfloat16)
     learning_rate = (
         (1.0 - is_warmup) * learning_rate + is_warmup * warmup_learning_rate)
 
@@ -69,8 +68,7 @@ def create_optimizer(loss, init_lr, num_train_steps, num_warmup_steps, use_tpu):
     optimizer = tf.contrib.tpu.CrossShardOptimizer(optimizer)
 
   tvars = tf.trainable_variables()
-  #grads = tf.gradients(loss, tvars)
-  grads = gradients(loss, tvars, checkpoints='memory')
+  grads = tf.gradients(loss, tvars)
 
   # This is how the model was pre-trained.
   (grads, _) = tf.clip_by_global_norm(grads, clip_norm=1.0)
@@ -115,17 +113,17 @@ class AdamWeightDecayOptimizer(tf.train.Optimizer):
         continue
 
       param_name = self._get_variable_name(param.name)
-
+      #change here
       m = tf.get_variable(
           name=param_name + "/adam_m",
           shape=param.shape.as_list(),
-          dtype=tf.float32,
+          dtype=tf.bfloat16,
           trainable=False,
           initializer=tf.zeros_initializer())
       v = tf.get_variable(
           name=param_name + "/adam_v",
           shape=param.shape.as_list(),
-          dtype=tf.float32,
+          dtype=tf.bfloat16,
           trainable=False,
           initializer=tf.zeros_initializer())
 
