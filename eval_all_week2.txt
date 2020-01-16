@@ -8,3 +8,45 @@ m40 single tpu:
 21.42G (1,1,1) in v3-8 bs=8
 21.42G nothing in v3-8 bs=8
 44.14G nothing in v3-8 bs=16
+
+
+
+
+------------------------------------------------------------------------------------------
+Bert tpu ms512 cn64:
+Total hbm usage >= 21.42G:
+    reserved        528.00M
+    program          20.91G
+    arguments       unknown size
+
+Output size unknown.
+
+Program hbm requirement 20.91G:
+    reserved           4.0K
+    global           420.0K
+    HLO temp         20.91G (100.0% utilization, 0.5% fragmentation (104.47M))
+
+  Largest program allocations in hbm:
+
+  1. Size: 768.00M
+     Shape: f32[64,12,512,512]{3,2,1,0:T(8,128)}
+     Unpadded size: 768.00M
+     XLA label: %fusion.6236 = (f32[64,12,512]{2,1,0:T(8,128)}, f32[64,12,512,512]{3,2,1,0:T(8,128)}) fusion(f32[64,12,512]{2,1,0:T(8,128)} %fusion.1416, f32[64,12,512]{2,1,0:T(8,128)} %get-tuple-element.17943, f32[64,512]{1,0:T(8,128)} %fusion.4655, f32[64,12,512,512]{3,...
+     Allocation type: HLO temp
+     ==========================
+
+  2. Size: 768.00M
+     Operator: op_type="RandomUniform" op_name="bert/encoder/layer_0/attention/self/dropout/random_uniform/RandomUniform"
+     Shape: f32[64,12,512,512]{3,2,1,0:T(8,128)}
+     Unpadded size: 768.00M
+     XLA label: %rng.117 = f32[64,12,512,512]{3,2,1,0:T(8,128)} rng(f32[]{:T(256)} %constant.7637, f32[]{:T(256)} %constant.7634), distribution=rng_uniform, metadata={op_type="RandomUniform" op_name="bert/encoder/layer_0/attention/self/dropout/random_uniform/RandomUniform...
+     Allocation type: HLO temp
+     ==========================
+
+  3. Size: 768.00M
+     Operator: op_type="RandomUniform" op_name="bert/encoder/layer_1/attention/self/dropout/random_uniform/RandomUniform"
+     Shape: f32[64,12,512,512]{3,2,1,0:T(8,128)}
+     Unpadded size: 768.00M
+     XLA label: %rng.120 = f32[64,12,512,512]{3,2,1,0:T(8,128)} rng(f32[]{:T(256)} %constant.7637, f32[]{:T(256)} %constant.7634), distribution=rng_uniform, metadata={op_type="RandomUniform" op_name="bert/encoder/layer_1/attention/self/dropout/random_uniform/RandomUniform...
+     Allocation type: HLO temp
+------------------------------------------------------------------------------------------
