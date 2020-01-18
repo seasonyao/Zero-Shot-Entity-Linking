@@ -191,17 +191,17 @@ def create_zeshel_model(bert_config, is_training, input_ids, input_mask,
   num_labels = input_ids.shape[1].value
   seq_len = input_ids.shape[-1].value
 
-  input_ids = tf.split(input_ids, 8, 0)
-  segment_ids = tf.split(segment_ids, 8, 0)
-  input_mask = tf.split(input_mask, 8, 0)
-  mention_ids = tf.split(mention_ids, 8, 0)
-  labels = tf.split(labels, 8, 0)
-  labels = labels[0]
+  # input_ids = tf.split(input_ids, 8, 0)
+  # segment_ids = tf.split(segment_ids, 8, 0)
+  # input_mask = tf.split(input_mask, 8, 0)
+  # mention_ids = tf.split(mention_ids, 8, 0)
+  # labels = tf.split(labels, 8, 0)
+  # labels = labels[0]
 
-  input_ids = tf.reshape(input_ids[0], [-1, seq_len])
-  segment_ids = tf.reshape(segment_ids[0], [-1, seq_len])
-  input_mask = tf.reshape(input_mask[0], [-1, seq_len])
-  mention_ids = tf.reshape(mention_ids[0], [-1, seq_len])
+  input_ids = tf.reshape(input_ids, [-1, seq_len])
+  segment_ids = tf.reshape(segment_ids, [-1, seq_len])
+  input_mask = tf.reshape(input_mask, [-1, seq_len])
+  mention_ids = tf.reshape(mention_ids, [-1, seq_len])
 
   model = modeling.BertModel(
       config=bert_config,

@@ -1,18 +1,29 @@
-m40 single tpu:
-		bert(max_sequence=256, batch_size only 2~3, can16)
-		albert_base(max_sequence=256, batch_size about 7~8, can16)
-
-
+关于tpu的尝试处理
+# run_config = tf.estimator.tpu.RunConfig(
+#     cluster=tpu_cluster_resolver,
+#     master=FLAGS.master,
+#     model_dir=FLAGS.output_dir,
+#     save_checkpoints_steps=FLAGS.save_checkpoints_steps,
+#     tpu_config=tf.estimator.tpu.TPUConfig(
+#         iterations_per_loop=FLAGS.iterations_per_loop,
+#         per_host_input_for_training=is_per_host,
+#         num_cores_per_replica=8,
+#         input_partition_dims = [{'input_ids': [1,8,1], 'input_mask': [1,8,1], 
+结果：
 21.46G (1,8,1) in v3-8 bs=1
 135.99G (1,8,1) in v3-8 bs=8
 21.42G (1,1,1) in v3-8 bs=8
 21.42G nothing in v3-8 bs=8
 44.14G nothing in v3-8 bs=16
 
-
+V3-8最大16g
 
 
 ------------------------------------------------------------------------------------------
+m40 single tpu:
+		bert(max_sequence=256, batch_size only 2~3, can16)
+		albert_base(max_sequence=256, batch_size about 7~8, can16)
+
 Bert tpu ms512 cn64:
 Total hbm usage >= 21.42G:
     reserved        528.00M
@@ -49,14 +60,16 @@ Program hbm requirement 20.91G:
      Unpadded size: 768.00M
      XLA label: %rng.120 = f32[64,12,512,512]{3,2,1,0:T(8,128)} rng(f32[]{:T(256)} %constant.7637, f32[]{:T(256)} %constant.7634), distribution=rng_uniform, metadata={op_type="RandomUniform" op_name="bert/encoder/layer_1/attention/self/dropout/random_uniform/RandomUniform...
      Allocation type: HLO temp
-------------------------------------------------------------------------------------------
-
-
 
 总结来说，出现oom最关键得地方在于tf.gradient函数在计算整个graph的gradient的时候需要的显存太大了。所以如果用model parallel在前面create model部分做各种分散都没效果。我试着拿单独整个m40或者cpu去单独承担tf.gradient也无法容纳candidate_num64+max_sequence512的需求。所以首先我找到了一个来自openai的叫做checkpoint-gradient的东西，但对应的问题是这个gradient方式跑的实在太慢了。还有一些其他的方式。
 
+疑问：1.window size的不同是否只对最前面的embedding和transformer的第一层有影响？所以重点处理embedding到transformer的第一层之间这段operation就可以减少gradient所需的计算？
 
+2.embedding_postprocessor
+output = input + token_type_embeddings + mention_id + position_embeddings
+是否是直接将原来token的embedding加上这些东西，所以这层输出会变大？
 
+------------------------------------------------------------------------------------------
 
 Bert ms256_64:  7584						0.74248495511
 	coronation_street 1048
