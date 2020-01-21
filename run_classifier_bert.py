@@ -99,10 +99,10 @@ flags.DEFINE_float(
     "Proportion of training to perform linear learning rate warmup for. "
     "E.g., 0.1 = 10% of training.")
 
-flags.DEFINE_integer("save_checkpoints_steps", 500,
+flags.DEFINE_integer("save_checkpoints_steps", 1000,
                      "How often to save the model checkpoint.")
 
-flags.DEFINE_integer("iterations_per_loop", 500,
+flags.DEFINE_integer("iterations_per_loop", 1000,
                      "How many steps to make in each estimator call.")
 
 flags.DEFINE_bool("use_tpu", False, "Whether to use TPU or GPU/CPU.")
@@ -296,12 +296,12 @@ def model_fn_builder(bert_config, init_checkpoint, learning_rate,
       train_op = optimization.create_optimizer(
           total_loss, learning_rate, num_train_steps, num_warmup_steps, use_tpu)
 
-      #logging_hook = tf.train.LoggingTensorHook({"loss": total_loss}, every_n_iter=10)
+      logging_hook = tf.train.LoggingTensorHook({"loss": total_loss}, every_n_iter=100)
       output_spec = tf.estimator.tpu.TPUEstimatorSpec(
           mode=mode,
           loss=total_loss,
           train_op=train_op,
-          #training_hooks=[logging_hook],
+          training_hooks=[logging_hook],
           scaffold_fn=scaffold_fn)
     elif mode == tf.estimator.ModeKeys.EVAL:
 
@@ -373,8 +373,8 @@ def main(_):
       master=FLAGS.master,
       model_dir=FLAGS.output_dir,
       save_checkpoints_steps=FLAGS.save_checkpoints_steps,
-      save_summary_steps=10,
-      keep_checkpoint_max=15,
+      #save_summary_steps=10,
+      keep_checkpoint_max=10,
       tpu_config=tf.estimator.tpu.TPUConfig(
           iterations_per_loop=FLAGS.iterations_per_loop,
           per_host_input_for_training=is_per_host))
@@ -407,8 +407,11 @@ def main(_):
       predict_batch_size=FLAGS.predict_batch_size)
 
   if FLAGS.do_train:
-    train_file = os.path.join(FLAGS.data_dir, "train.tfrecord")
-    eval_file = os.path.join(FLAGS.data_dir, "eval_in_train.tfrecord")
+    # train_file = os.path.join(FLAGS.data_dir, "train.tfrecord")
+    # eval_file = os.path.join(FLAGS.data_dir, "eval_in_train.tfrecord")
+
+    train_file = os.path.join(FLAGS.data_dir, "train_ms384_128_cn48_central_mention.tfrecord")
+    eval_file = os.path.join(FLAGS.data_dir, "heldout_train_seen_ms128_128_cn48_central_mention.tfrecord")
 
     tf.logging.info("***** Running training *****")
     tf.logging.info("  Train file= %s", train_file)
