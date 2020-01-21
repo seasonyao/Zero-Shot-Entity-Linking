@@ -296,7 +296,7 @@ def model_fn_builder(bert_config, init_checkpoint, learning_rate,
       train_op = optimization.create_optimizer(
           total_loss, learning_rate, num_train_steps, num_warmup_steps, use_tpu)
 
-      logging_hook = tf.train.LoggingTensorHook({"loss": total_loss}, every_n_iter=100)
+      logging_hook = tf.train.LoggingTensorHook({"loss": total_loss}, every_n_iter=1000)
       output_spec = tf.estimator.tpu.TPUEstimatorSpec(
           mode=mode,
           loss=total_loss,
@@ -407,11 +407,7 @@ def main(_):
       predict_batch_size=FLAGS.predict_batch_size)
 
   if FLAGS.do_train:
-    # train_file = os.path.join(FLAGS.data_dir, "train.tfrecord")
-    # eval_file = os.path.join(FLAGS.data_dir, "eval_in_train.tfrecord")
-
-    train_file = os.path.join(FLAGS.data_dir, "train_ms384_128_cn48_central_mention.tfrecord")
-    eval_file = os.path.join(FLAGS.data_dir, "heldout_train_seen_ms128_128_cn48_central_mention.tfrecord")
+    train_file = os.path.join(FLAGS.data_dir, "train.tfrecord")
 
     tf.logging.info("***** Running training *****")
     tf.logging.info("  Train file= %s", train_file)
@@ -425,20 +421,7 @@ def main(_):
         is_training=True,
         drop_remainder=True)
 
-    #estimator.train(input_fn=train_input_fn, max_steps=num_train_steps)
-
-    eval_input_fn = file_based_input_fn_builder(
-        input_file=eval_file,
-        num_cands=FLAGS.num_cands,
-        seq_length=FLAGS.max_seq_length,
-        is_training=False,
-        drop_remainder=True)
-
-    train_spec = tf.estimator.TrainSpec(input_fn=train_input_fn,
-                                        max_steps=num_train_steps)
-    eval_spec = tf.estimator.EvalSpec(input_fn=eval_input_fn, 
-                                      steps=None)
-    tf.estimator.train_and_evaluate(estimator, train_spec, eval_spec)
+    estimator.train(input_fn=train_input_fn, max_steps=num_train_steps)
 
 
 
