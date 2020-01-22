@@ -168,7 +168,11 @@ def file_based_input_fn_builder(input_file, num_cands, seq_length, is_training,
 
     # For training, we want a lot of parallel reading and shuffling.
     # For eval, we want no shuffling and parallel reading doesn't matter.
-    d = tf.data.TFRecordDataset(input_file)
+    if len(input_file) > 1:
+      d = tf.data.TFRecordDataset(input_file, num_parallel_reads = 3)
+    else:
+      d = tf.data.TFRecordDataset(input_file)
+
     if is_training:
       d = d.repeat()
       d = d.shuffle(buffer_size=100)
@@ -405,7 +409,11 @@ def main(_):
       predict_batch_size=FLAGS.predict_batch_size)
 
   if FLAGS.do_train:
-    train_file = os.path.join(FLAGS.data_dir, "train.tfrecord")
+    #train_file = os.path.join(FLAGS.data_dir, "train_central_mention.tfrecord")
+    train_file = []
+    train_file.append(os.path.join(FLAGS.data_dir, "train_central_mention.tfrecord"))
+    train_file.append(os.path.join(FLAGS.data_dir, "train_focus_prefix.tfrecord"))
+    train_file.append(os.path.join(FLAGS.data_dir, "train_focus_suffix.tfrecord"))
 
     tf.logging.info("***** Running training *****")
     tf.logging.info("  Train file= %s", train_file)
@@ -425,6 +433,7 @@ def main(_):
 
   if FLAGS.do_eval:
     eval_file = os.path.join(FLAGS.data_dir, FLAGS.eval_domain + ".tfrecord")
+    #eval_file = os.path.join(FLAGS.data_dir, "heldout_train_seen_ms256_256_cn48_central_mention.tfrecord")
 
     tf.logging.info("***** Running evaluation *****")
     tf.logging.info("  Batch size = %d", FLAGS.eval_batch_size)
