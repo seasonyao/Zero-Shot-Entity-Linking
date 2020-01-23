@@ -37,3 +37,79 @@ train384_128 test384_128_with_padding_process:   			0.74254583536
 		elder_scrolls:
 			eval_accuracy = 0.7242509
 			eval_loss = 2.423983
+train128_128_pad_aug:   						0.74322535132
+		coronation_street:
+			eval_accuracy = 0.82623625
+			eval_loss = 1.3432736
+		ice_hockey:
+			eval_accuracy = 0.7231183
+			eval_loss = 2.2866676
+		muppets:
+			eval_accuracy = 0.77717394
+			eval_loss = 1.5150747
+		elder_scrolls:
+			eval_accuracy = 0.7104401
+			eval_loss = 1.898252
+		heldout_seen:
+			eval_accuracy = 0.86899036
+			eval_loss = 0.88331985
+		heldout_unseen:
+			eval_accuracy = 0.8375401
+			eval_loss = 1.0893763
+train256_256_pad_aug_34000:   						0.75410515021
+		coronation_street:
+			eval_accuracy = 0.80975276
+			eval_loss = 1.9731684
+		ice_hockey:
+			eval_accuracy = 0.7302867
+			eval_loss = 3.6343958
+		muppets:
+			eval_accuracy = 0.79001975
+			eval_loss = 1.9903044
+		elder_scrolls:
+			eval_accuracy = 0.7303371
+			eval_loss = 2.704694
+		heldout_seen:
+			eval_accuracy = 0.8886218
+			eval_loss = 1.0693281
+		heldout_unseen:
+			eval_accuracy = 0.84815705
+			eval_loss = 1.5801659
+train256_256_pad_aug_32000:   						0.75515991281
+		coronation_street:
+			eval_accuracy = 0.83722526
+			eval_loss = 1.5636553
+		ice_hockey:
+			eval_accuracy = 0.7249104
+			eval_loss = 3.669159
+		muppets:
+			eval_accuracy = 0.7924901
+			eval_loss = 2.0065985
+		elder_scrolls:
+			eval_accuracy = 0.72542137
+			eval_loss = 2.8217034
+		heldout_seen:
+			eval_accuracy = 0.8880208
+			eval_loss = 1.085236
+		heldout_unseen:
+			eval_accuracy = 0.85096157
+			eval_loss = 1.602205
+train256_256_pad_aug_18000:   						0.74966305182
+		coronation_street:
+			eval_accuracy = 0.83997256
+			eval_loss = 1.1456978
+		ice_hockey:
+			eval_accuracy = 0.71594983
+			eval_loss = 3.3608372
+		muppets:
+			eval_accuracy = 0.7905138
+			eval_loss = 1.7768219
+		elder_scrolls:
+			eval_accuracy = 0.7172285
+			eval_loss = 2.1874285
+		heldout_seen:
+			eval_accuracy = 0.8661859
+			eval_loss = 0.9530404
+		heldout_unseen:
+			eval_accuracy = 0.84194714
+			eval_loss = 1.2120118

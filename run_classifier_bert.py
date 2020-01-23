@@ -169,9 +169,9 @@ def file_based_input_fn_builder(input_file, num_cands, seq_length, is_training,
     # For training, we want a lot of parallel reading and shuffling.
     # For eval, we want no shuffling and parallel reading doesn't matter.
     if len(input_file) > 1:
-      d = tf.data.TFRecordDataset(input_file, num_parallel_reads = 3)
+      d = tf.data.TFRecordDataset(input_file, num_parallel_reads = len(input_file))
     else:
-      d = tf.data.TFRecordDataset(input_file)
+      d = tf.data.TFRecordDataset(input_file[0])
 
     if is_training:
       d = d.repeat()
@@ -300,11 +300,16 @@ def model_fn_builder(bert_config, init_checkpoint, learning_rate,
       train_op = optimization.create_optimizer(
           total_loss, learning_rate, num_train_steps, num_warmup_steps, use_tpu)
 
+      predictions = tf.argmax(logits, axis=-1, output_type=tf.int32)
+      accuracy = tf.metrics.accuracy(
+            labels=label_ids, predictions=predictions)
+      logging_hook = tf.train.LoggingTensorHook({"loss": total_loss, "acc":accuracy}, every_n_iter=100)
       output_spec = tf.estimator.tpu.TPUEstimatorSpec(
           mode=mode,
           loss=total_loss,
           train_op=train_op,
-          scaffold_fn=scaffold_fn)
+          scaffold_fn=scaffold_fn,
+          training_hooks=[logging_hook])
     elif mode == tf.estimator.ModeKeys.EVAL:
 
       def metric_fn(per_example_loss, label_ids, logits):
@@ -432,8 +437,9 @@ def main(_):
 
 
   if FLAGS.do_eval:
-    eval_file = os.path.join(FLAGS.data_dir, FLAGS.eval_domain + ".tfrecord")
-    #eval_file = os.path.join(FLAGS.data_dir, "heldout_train_seen_ms256_256_cn48_central_mention.tfrecord")
+    eval_file = []
+    eval_file.append(os.path.join(FLAGS.data_dir, FLAGS.eval_domain + ".tfrecord"))
+    #eval_file.append(os.path.join(FLAGS.data_dir, "heldout_train_seen_ms256_256_cn48_central_mention.tfrecord"))
 
     tf.logging.info("***** Running evaluation *****")
     tf.logging.info("  Batch size = %d", FLAGS.eval_batch_size)
@@ -445,7 +451,7 @@ def main(_):
     if FLAGS.use_tpu:
       eval_steps = 0
       for fn in [eval_file]:
-        for record in tf.python_io.tf_record_iterator(fn):
+        for record in tf.python_io.tf_record_iterator(fn[0]):
           eval_steps += 1
 
       eval_steps = int(eval_steps // FLAGS.eval_batch_size)
