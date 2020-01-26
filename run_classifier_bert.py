@@ -303,13 +303,11 @@ def model_fn_builder(bert_config, init_checkpoint, learning_rate,
       predictions = tf.argmax(logits, axis=-1, output_type=tf.int32)
       accuracy = tf.metrics.accuracy(
             labels=label_ids, predictions=predictions)
-      logging_hook = tf.train.LoggingTensorHook({"loss": total_loss, "acc":accuracy}, every_n_iter=100)
       output_spec = tf.estimator.tpu.TPUEstimatorSpec(
           mode=mode,
           loss=total_loss,
           train_op=train_op,
-          scaffold_fn=scaffold_fn,
-          training_hooks=[logging_hook])
+          scaffold_fn=scaffold_fn)
     elif mode == tf.estimator.ModeKeys.EVAL:
 
       def metric_fn(per_example_loss, label_ids, logits):

@@ -113,3 +113,29 @@ train256_256_pad_aug_18000:   						0.74966305182
 		heldout_unseen:
 			eval_accuracy = 0.84194714
 			eval_loss = 1.2120118
+train384_128_pad_aug_37500:   						0.75147349903
+		coronation_street:
+			eval_accuracy = 0.8331044
+			eval_loss = 1.6441251
+		ice_hockey:
+			eval_accuracy = 0.7208781
+			eval_loss = 3.601822
+		muppets:
+			eval_accuracy = 0.7766798
+			eval_loss = 2.1185484
+		elder_scrolls:
+			eval_accuracy = 0.72776216
+			eval_loss = 2.9317608
+train384_128_pad_aug_22000:   						0.75101881755
+		coronation_street:
+			eval_accuracy = 0.8434066
+			eval_loss = 1.1756281
+		ice_hockey:
+			eval_accuracy = 0.702509
+			eval_loss = 2.6095028
+		muppets:
+			eval_accuracy = 0.7964427
+			eval_loss = 1.6800348
+		elder_scrolls:
+			eval_accuracy = 0.7221442
+			eval_loss = 2.1194382
