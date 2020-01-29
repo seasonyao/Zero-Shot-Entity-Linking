@@ -165,7 +165,7 @@ def file_based_input_fn_builder(input_file, num_cands, seq_length, is_training,
   def input_fn(params):
     """The actual input function."""
     batch_size = params["batch_size"]
-    num_cpu_threads = len(input_files)
+    num_cpu_threads = len(input_file)
 
     # # For training, we want a lot of parallel reading and shuffling.
     # # For eval, we want no shuffling and parallel reading doesn't matter.
@@ -178,9 +178,9 @@ def file_based_input_fn_builder(input_file, num_cands, seq_length, is_training,
     #   d = d.repeat()
     #   d = d.shuffle(buffer_size=100)
     if is_training:
-      d = tf.data.Dataset.from_tensor_slices(tf.constant(input_files))
+      d = tf.data.Dataset.from_tensor_slices(tf.constant(input_file))
       d = d.repeat()
-      d = d.shuffle(buffer_size=len(input_files))
+      d = d.shuffle(buffer_size=len(input_file))
 
       # `cycle_length` is the number of parallel files that get read.
       cycle_length = num_cpu_threads
@@ -188,13 +188,13 @@ def file_based_input_fn_builder(input_file, num_cands, seq_length, is_training,
       # `sloppy` mode means that the interleaving is not exact. This adds
       # even more randomness to the training pipeline.
       d = d.apply(
-          tf.contrib.data.parallel_interleave(
+          tf.data.experimental.parallel_interleave(
               tf.data.TFRecordDataset,
               sloppy=is_training,
               cycle_length=cycle_length))
       d = d.shuffle(buffer_size=100)
     else:
-      d = tf.data.TFRecordDataset(input_files)
+      d = tf.data.TFRecordDataset(input_file)
       # Since we evaluate for a fixed number of steps we don't want to encounter
       # out-of-range exceptions.
       d = d.repeat()
