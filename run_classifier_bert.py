@@ -165,22 +165,46 @@ def file_based_input_fn_builder(input_file, num_cands, seq_length, is_training,
   def input_fn(params):
     """The actual input function."""
     batch_size = params["batch_size"]
+    num_cpu_threads = len(input_files)
 
-    # For training, we want a lot of parallel reading and shuffling.
-    # For eval, we want no shuffling and parallel reading doesn't matter.
-    if len(input_file) > 1:
-      d = tf.data.TFRecordDataset(input_file, num_parallel_reads = len(input_file))
-    else:
-      d = tf.data.TFRecordDataset(input_file[0])
+    # # For training, we want a lot of parallel reading and shuffling.
+    # # For eval, we want no shuffling and parallel reading doesn't matter.
+    # if len(input_file) > 1:
+    #   d = tf.data.TFRecordDataset(input_file, num_parallel_reads = len(input_file))
+    # else:
+    #   d = tf.data.TFRecordDataset(input_file[0])
 
+    # if is_training:
+    #   d = d.repeat()
+    #   d = d.shuffle(buffer_size=100)
     if is_training:
+      d = tf.data.Dataset.from_tensor_slices(tf.constant(input_files))
       d = d.repeat()
+      d = d.shuffle(buffer_size=len(input_files))
+
+      # `cycle_length` is the number of parallel files that get read.
+      cycle_length = num_cpu_threads
+
+      # `sloppy` mode means that the interleaving is not exact. This adds
+      # even more randomness to the training pipeline.
+      d = d.apply(
+          tf.contrib.data.parallel_interleave(
+              tf.data.TFRecordDataset,
+              sloppy=is_training,
+              cycle_length=cycle_length))
       d = d.shuffle(buffer_size=100)
+    else:
+      d = tf.data.TFRecordDataset(input_files)
+      # Since we evaluate for a fixed number of steps we don't want to encounter
+      # out-of-range exceptions.
+      d = d.repeat()
+
 
     d = d.apply(
         tf.data.experimental.map_and_batch(
             lambda record: _decode_record(record, name_to_features),
             batch_size=batch_size,
+            num_parallel_batches=num_cpu_threads,
             drop_remainder=drop_remainder))
 
     return d
@@ -435,9 +459,11 @@ def main(_):
 
 
   if FLAGS.do_eval:
-    eval_file = []
-    eval_file.append(os.path.join(FLAGS.data_dir, FLAGS.eval_domain + ".tfrecord"))
+    #eval_file = []
+    # eval_file.append(os.path.join(FLAGS.data_dir, FLAGS.eval_domain + ".tfrecord"))
     #eval_file.append(os.path.join(FLAGS.data_dir, "heldout_train_seen_ms256_256_cn48_central_mention.tfrecord"))
+    eval_file = os.path.join(FLAGS.data_dir, FLAGS.eval_domain + ".tfrecord")
+    eval_file = os.path.join(FLAGS.data_dir, "heldout_seen.tfrecord")
 
     tf.logging.info("***** Running evaluation *****")
     tf.logging.info("  Batch size = %d", FLAGS.eval_batch_size)
@@ -449,7 +475,7 @@ def main(_):
     if FLAGS.use_tpu:
       eval_steps = 0
       for fn in [eval_file]:
-        for record in tf.python_io.tf_record_iterator(fn[0]):
+        for record in tf.python_io.tf_record_iterator(fn):
           eval_steps += 1
 
       eval_steps = int(eval_steps // FLAGS.eval_batch_size)
