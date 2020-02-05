@@ -135,6 +135,14 @@ flags.DEFINE_integer(
     "num_train_examples", 50000,
     "Number of training examples.")
 
+flags.DEFINE_float(
+    "mask_lm_rate", 0.15, 
+    "The initial learning rate for Adam.")
+
+flags.DEFINE_integer(
+    "mask_word_id", 103,
+    "Maximum number of eval steps.")
+
 
 def file_based_input_fn_builder(input_file, num_cands, seq_length, is_training,
                                 drop_remainder):
@@ -213,7 +221,7 @@ def file_based_input_fn_builder(input_file, num_cands, seq_length, is_training,
 
 
 def create_zeshel_model(bert_config, is_training, input_ids, input_mask,
-     segment_ids, mention_ids, labels, use_one_hot_embeddings):
+     segment_ids, mention_ids, word_ids, labels, use_one_hot_embeddings):
   """Creates a classification model."""
 
   num_labels = input_ids.shape[1].value
@@ -230,11 +238,17 @@ def create_zeshel_model(bert_config, is_training, input_ids, input_mask,
   segment_ids = tf.reshape(segment_ids, [-1, seq_len])
   input_mask = tf.reshape(input_mask, [-1, seq_len])
   mention_ids = tf.reshape(mention_ids, [-1, seq_len])
+  word_ids = tf.reshape(word_ids, [-1, seq_len])
+
+  random_mask = tf.random_uniform(input_ids.shape)
+  masked_lm_positions = tf.cast(random_mask < FLAGS.mask_lm_rate, tf.int32)
+  masked_lm_positions *= word_ids
+  masked_lm_input_ids = masked_lm_positions * FLAGS.mask_word_id + (1 - masked_lm_positions) * input_ids
 
   model = modeling.BertModel(
       config=bert_config,
       is_training=is_training,
-      input_ids=input_ids,
+      input_ids=masked_lm_input_ids,
       input_mask=input_mask,
       mention_ids=mention_ids,
       token_type_ids=segment_ids,
@@ -287,11 +301,12 @@ def model_fn_builder(bert_config, init_checkpoint, learning_rate,
     segment_ids = features["segment_ids"]
     label_ids = features["label_id"]
     mention_ids = features["mention_id"]
+    word_ids = features["word_ids"]
 
     is_training = (mode == tf.estimator.ModeKeys.TRAIN)
 
     (total_loss, per_example_loss, logits, probabilities) = create_zeshel_model(
-        bert_config, is_training, input_ids, input_mask, segment_ids, mention_ids,
+        bert_config, is_training, input_ids, input_mask, segment_ids, mention_ids, word_ids,
         label_ids, use_one_hot_embeddings)
 
     tvars = tf.trainable_variables()
