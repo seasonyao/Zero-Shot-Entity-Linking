@@ -147,15 +147,23 @@ flags.DEFINE_integer(
 def file_based_input_fn_builder(input_file, num_cands, seq_length, is_training,
                                 drop_remainder):
   """Creates an `input_fn` closure to be passed to TPUEstimator."""
-
-  name_to_features = {
-      "input_ids": tf.FixedLenFeature([num_cands, seq_length], tf.int64),
-      "input_mask": tf.FixedLenFeature([num_cands, seq_length], tf.int64),
-      "segment_ids": tf.FixedLenFeature([num_cands, seq_length], tf.int64),
-      "mention_id": tf.FixedLenFeature([num_cands, seq_length], tf.int64),
-      "word_ids": tf.FixedLenFeature([num_cands, seq_length], tf.int64),
-      "label_id": tf.FixedLenFeature([], tf.int64),
-  }
+  if is_training:
+    name_to_features = {
+        "input_ids": tf.FixedLenFeature([num_cands, seq_length], tf.int64),
+        "input_mask": tf.FixedLenFeature([num_cands, seq_length], tf.int64),
+        "segment_ids": tf.FixedLenFeature([num_cands, seq_length], tf.int64),
+        "mention_id": tf.FixedLenFeature([num_cands, seq_length], tf.int64),
+        "word_ids": tf.FixedLenFeature([num_cands, seq_length], tf.int64),
+        "label_id": tf.FixedLenFeature([], tf.int64)
+    }
+  else:
+    name_to_features = {
+        "input_ids": tf.FixedLenFeature([num_cands, seq_length], tf.int64),
+        "input_mask": tf.FixedLenFeature([num_cands, seq_length], tf.int64),
+        "segment_ids": tf.FixedLenFeature([num_cands, seq_length], tf.int64),
+        "mention_id": tf.FixedLenFeature([num_cands, seq_length], tf.int64),
+        "label_id": tf.FixedLenFeature([], tf.int64)
+    }
 
   def _decode_record(record, name_to_features):
     """Decodes a record to a TensorFlow example."""
@@ -222,38 +230,45 @@ def file_based_input_fn_builder(input_file, num_cands, seq_length, is_training,
 
 
 def create_zeshel_model(bert_config, is_training, input_ids, input_mask,
-     segment_ids, mention_ids, word_ids, labels, use_one_hot_embeddings):
+     segment_ids, mention_ids, labels, use_one_hot_embeddings, word_ids=None):
   """Creates a classification model."""
 
   num_labels = input_ids.shape[1].value
   seq_len = input_ids.shape[-1].value
 
-  # input_ids = tf.split(input_ids, 8, 0)
-  # segment_ids = tf.split(segment_ids, 8, 0)
-  # input_mask = tf.split(input_mask, 8, 0)
-  # mention_ids = tf.split(mention_ids, 8, 0)
-  # labels = tf.split(labels, 8, 0)
-  # labels = labels[0]
-
   input_ids = tf.reshape(input_ids, [-1, seq_len])
   segment_ids = tf.reshape(segment_ids, [-1, seq_len])
   input_mask = tf.reshape(input_mask, [-1, seq_len])
   mention_ids = tf.reshape(mention_ids, [-1, seq_len])
-  word_ids = tf.reshape(word_ids, [-1, seq_len])
 
-  random_mask = tf.random_uniform(input_ids.shape)
-  masked_lm_positions = tf.cast(random_mask < FLAGS.mask_lm_rate, tf.int32)
-  masked_lm_positions *= word_ids
-  masked_lm_input_ids = masked_lm_positions * FLAGS.mask_word_id + (1 - masked_lm_positions) * input_ids
+  if is_training:
+    word_ids = tf.reshape(word_ids, [-1, seq_len])
 
-  model = modeling.BertModel(
-      config=bert_config,
-      is_training=is_training,
-      input_ids=masked_lm_input_ids,
-      input_mask=input_mask,
-      mention_ids=mention_ids,
-      token_type_ids=segment_ids,
-      use_one_hot_embeddings=use_one_hot_embeddings)
+    random_mask = tf.random_uniform(input_ids.shape)
+    masked_lm_positions = tf.cast(random_mask < FLAGS.mask_lm_rate, tf.int32)
+    masked_lm_positions *= word_ids
+    masked_lm_input_ids = masked_lm_positions * FLAGS.mask_word_id + (1 - masked_lm_positions) * input_ids
+
+    model = modeling.BertModel(
+        config=bert_config,
+        is_training=is_training,
+        input_ids=masked_lm_input_ids,
+        input_mask=input_mask,
+        mention_ids=mention_ids,
+        token_type_ids=segment_ids,
+        use_one_hot_embeddings=use_one_hot_embeddings)
+
+  else:
+    model = modeling.BertModel(
+        config=bert_config,
+        is_training=is_training,
+        input_ids=input_ids,
+        input_mask=input_mask,
+        mention_ids=mention_ids,
+        token_type_ids=segment_ids,
+        use_one_hot_embeddings=use_one_hot_embeddings)
+
+
 
   output_layer = model.get_pooled_output()
 
@@ -302,13 +317,18 @@ def model_fn_builder(bert_config, init_checkpoint, learning_rate,
     segment_ids = features["segment_ids"]
     label_ids = features["label_id"]
     mention_ids = features["mention_id"]
-    word_ids = features["word_ids"]
 
     is_training = (mode == tf.estimator.ModeKeys.TRAIN)
 
-    (total_loss, per_example_loss, logits, probabilities) = create_zeshel_model(
-        bert_config, is_training, input_ids, input_mask, segment_ids, mention_ids, word_ids,
-        label_ids, use_one_hot_embeddings)
+    if is_training:
+      word_ids = features["word_ids"]
+      (total_loss, per_example_loss, logits, probabilities) = create_zeshel_model(
+          bert_config, is_training, input_ids, input_mask, segment_ids, mention_ids,
+          label_ids, use_one_hot_embeddings, word_ids)
+    else:
+      (total_loss, per_example_loss, logits, probabilities) = create_zeshel_model(
+          bert_config, is_training, input_ids, input_mask, segment_ids, mention_ids,
+          label_ids, use_one_hot_embeddings)
 
     tvars = tf.trainable_variables()
     initialized_variable_names = {}
@@ -455,8 +475,6 @@ def main(_):
     #train_file = os.path.join(FLAGS.data_dir, "train_central_mention.tfrecord")
     train_file = []
     train_file.append(os.path.join(FLAGS.data_dir, "train_central_mention.tfrecord"))
-    train_file.append(os.path.join(FLAGS.data_dir, "train_focus_prefix.tfrecord"))
-    train_file.append(os.path.join(FLAGS.data_dir, "train_focus_suffix.tfrecord"))
 
     tf.logging.info("***** Running training *****")
     tf.logging.info("  Train file= %s", train_file)
@@ -479,7 +497,7 @@ def main(_):
     # eval_file.append(os.path.join(FLAGS.data_dir, FLAGS.eval_domain + ".tfrecord"))
     #eval_file.append(os.path.join(FLAGS.data_dir, "heldout_train_seen_ms256_256_cn48_central_mention.tfrecord"))
     eval_file = os.path.join(FLAGS.data_dir, FLAGS.eval_domain + ".tfrecord")
-    eval_file = os.path.join(FLAGS.data_dir, "heldout_seen.tfrecord")
+    #eval_file = os.path.join(FLAGS.data_dir, "heldout_seen.tfrecord")
 
     tf.logging.info("***** Running evaluation *****")
     tf.logging.info("  Batch size = %d", FLAGS.eval_batch_size)

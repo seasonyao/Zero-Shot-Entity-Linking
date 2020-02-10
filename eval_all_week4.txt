@@ -1,6 +1,6 @@
 1.看看以mask作为data augmentation的结果如何，和pretrain结合的效果如何
 2.用48目前最好的结果跑64 candidates case看看结果是否会下降很多
 3.先确认一下48最大能跑的ms，跑一下结果。把48减少到32，看看32情况下512->768->1024的max sequence结果
-4.想想如何保持pretrain的信息不丢失（比如如何做pretrain+train+pretrain+train）
+4.想想如何保持pretrain的信息不丢失（比如如何做pretrain+train+pretrain+train）如何像resnet一样做的简单优雅(通过每n轮step减少bert中的一层trainable？)
 5.写出tf2的基于transfomer的code，在此基础上改进得到可以直接train 64 candidates case的代码
 6.384+128是否比256256更好？

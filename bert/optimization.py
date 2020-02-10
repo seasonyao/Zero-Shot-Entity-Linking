@@ -68,6 +68,10 @@ def create_optimizer(loss, init_lr, num_train_steps, num_warmup_steps, use_tpu):
     optimizer = tf.contrib.tpu.CrossShardOptimizer(optimizer)
 
   tvars = tf.trainable_variables()
+
+  # all pretrained weights inside BERT starts with 'bert'
+  tvars = [tvar for tvar in tvars if not tvar.name.startswith('bert')]
+
   grads = tf.gradients(loss, tvars)
 
   # This is how the model was pre-trained.
