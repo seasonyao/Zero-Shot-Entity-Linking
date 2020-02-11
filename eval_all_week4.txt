@@ -1,6 +1,11 @@
-1.看看以mask作为data augmentation的结果如何，和pretrain结合的效果如何
-2.用48目前最好的结果跑64 candidates case看看结果是否会下降很多
-3.先确认一下48最大能跑的ms，跑一下结果。把48减少到32，看看32情况下512->768->1024的max sequence结果
-4.想想如何保持pretrain的信息不丢失（比如如何做pretrain+train+pretrain+train）如何像resnet一样做的简单优雅(通过每n轮step减少bert中的一层trainable？)
-5.写出tf2的基于transfomer的code，在此基础上改进得到可以直接train 64 candidates case的代码
-6.384+128是否比256256更好？
+1.看看以mask作为data augmentation的结果如何，和pretrain结合的效果如何 answer:great
+2.用48目前最好的结果跑64 candidates case看看结果是否会下降很多 answer:完全不会，事实上因为tfidf给candidate排过序，所以前面的candidate理论上比后面的难，所以后面的对结果没有什么影响
+3.先确认一下48最大能跑的ms，跑一下结果。把48减少到32，看看32情况下512->768->1024的max sequence结果-->直接init会超过512限制，是否可以把embedding那一层对应部分不init直接训？
+4.想想如何保持pretrain的信息不丢失（比如如何做pretrain+train+pretrain+train）如何像resnet一样做的简单优雅(通过每n轮step减少bert中的一层trainable？) answer:frezeing bert?
+5.384+128是否比256256更好？ Answer:no
+6.另外一个猜想：在2成立的情况下，说明48选1和64选1的对于bert的难度、逻辑等等都差不多，那以后为了节省memory，对于此类问题是否都可以现在稍小的candidate num上进行预训练，然后把bert的某些层freeze掉再放到超大的candidate num上进行正式的fine tuning
+7.如果因为batch size太小所以48的表现不如64好，那gradient accumulate就需要
+
+
+
+8.64比48好可能是因为大的batch size比小的batch size好，也可能是64比48的数据更丰富。可以通过随机从64中选择48candidate来证明是前者还是后者。

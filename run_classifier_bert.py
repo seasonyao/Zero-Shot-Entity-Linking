@@ -334,8 +334,10 @@ def model_fn_builder(bert_config, init_checkpoint, learning_rate,
     initialized_variable_names = {}
     scaffold_fn = None
     if init_checkpoint:
+      # (assignment_map, initialized_variable_names
+      # ) = bert.modeling.get_assignment_map_from_checkpoint(tvars, init_checkpoint)
       (assignment_map, initialized_variable_names
-      ) = bert.modeling.get_assignment_map_from_checkpoint(tvars, init_checkpoint)
+      ) = bert.modeling.get_assignment_map_from_checkpoint_for_larger_window_size(tvars, init_checkpoint)
       if use_tpu:
 
         def tpu_scaffold():
