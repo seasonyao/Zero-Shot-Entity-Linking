@@ -23,7 +23,8 @@ import csv
 import os
 import modeling
 import bert
-from bert import optimization
+#from bert import optimization
+from bert import optimization_with_gradient_accumulate
 from bert import tokenization
 #import tensorflow as tf
 import tensorflow.compat.v1 as tf
@@ -359,7 +360,9 @@ def model_fn_builder(bert_config, init_checkpoint, learning_rate,
     output_spec = None
     if mode == tf.estimator.ModeKeys.TRAIN:
 
-      train_op = optimization.create_optimizer(
+      # train_op = optimization.create_optimizer(
+      #     total_loss, learning_rate, num_train_steps, num_warmup_steps, use_tpu)
+      train_op = optimization_with_gradient_accumulate.create_optimizer(
           total_loss, learning_rate, num_train_steps, num_warmup_steps, use_tpu)
 
       predictions = tf.argmax(logits, axis=-1, output_type=tf.int32)

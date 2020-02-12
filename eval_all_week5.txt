@@ -1,0 +1,1 @@
+1.256 batch_size and 768 token pretrain会oom. so 用128的batch size

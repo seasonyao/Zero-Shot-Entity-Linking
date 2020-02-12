@@ -352,6 +352,10 @@ def get_assignment_map_from_checkpoint_for_larger_window_size(tvars, init_checkp
     m = re.match("^(.*):\\d+$", name)
     if m is not None:
       name = m.group(1)
+
+    if name == "bert/embeddings/position_embeddings":
+      continue
+
     name_to_variable[name] = var
 
   init_vars = tf.train.list_variables(init_checkpoint)
@@ -364,32 +368,32 @@ def get_assignment_map_from_checkpoint_for_larger_window_size(tvars, init_checkp
     assignment_map[name] = name
     initialized_variable_names[name] = 1
     initialized_variable_names[name + ":0"] = 1
+  
+  # output_predict_file = "gs://zero_shot_entity_link/name_to_variable.txt"
+  # with tf.gfile.GFile(output_predict_file, "w") as writer:
+  #     num_written_lines = 0
+  #     for x in name_to_variable:
+  #       line = x + '\t' + name_to_variable[x] + '\n'
+  #       writer.write(line)
+  #       num_written_lines += 1
 
-  output_predict_file = "gs://zero_shot_entity_link/name_to_variable.txt"
-  with tf.gfile.GFile(output_predict_file, "w") as writer:
-      num_written_lines = 0
-      for x in name_to_variable:
-        line = x + '\t' + name_to_variable[x] + '\n'
-        writer.write(line)
-        num_written_lines += 1
+  # output_predict_file = "gs://zero_shot_entity_link/assignment_map.txt"
+  # with tf.gfile.GFile(output_predict_file, "w") as writer:
+  #     num_written_lines = 0
+  #     for x in assignment_map:
+  #       line = x + '\t' + assignment_map[x] + '\n'
+  #       writer.write(line)
+  #       num_written_lines += 1
 
-  output_predict_file = "gs://zero_shot_entity_link/assignment_map.txt"
-  with tf.gfile.GFile(output_predict_file, "w") as writer:
-      num_written_lines = 0
-      for x in assignment_map:
-        line = x + '\t' + assignment_map[x] + '\n'
-        writer.write(line)
-        num_written_lines += 1
+  # output_predict_file = "gs://zero_shot_entity_link/initialized_variable_names.txt"
+  # with tf.gfile.GFile(output_predict_file, "w") as writer:
+  #     num_written_lines = 0
+  #     for x in initialized_variable_names:
+  #       line = x + '\t' + initialized_variable_names[x] + '\n'
+  #       writer.write(line)
+  #       num_written_lines += 1
 
-  output_predict_file = "gs://zero_shot_entity_link/initialized_variable_names.txt"
-  with tf.gfile.GFile(output_predict_file, "w") as writer:
-      num_written_lines = 0
-      for x in initialized_variable_names:
-        line = x + '\t' + initialized_variable_names[x] + '\n'
-        writer.write(line)
-        num_written_lines += 1
-
-  assert 1==0
+  # assert 1==0
 
   return (assignment_map, initialized_variable_names)
 
