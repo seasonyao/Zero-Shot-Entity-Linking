@@ -71,7 +71,7 @@ def create_optimizer(loss, init_lr, num_train_steps, num_warmup_steps, use_tpu):
     optimizer = tf.contrib.tpu.CrossShardOptimizer(optimizer)
 
   tvars = tf.trainable_variables()
-  accum_vars = [tf.Variable(tf.zeros_like(tv.initialized_value()), trainable=False) for tv in tvars]
+  accum_vars = [tf.Variable(lambda: tf.zeros_like(tv.initialized_value()), trainable=False) for tv in tvars]
 
   # all pretrained weights inside BERT starts with 'bert'
   #tvars = [tvar for tvar in tvars if not tvar.name.startswith('bert')]
@@ -83,7 +83,7 @@ def create_optimizer(loss, init_lr, num_train_steps, num_warmup_steps, use_tpu):
 
   def grad_step():
     zero_ops = tf.group([tv.assign(tf.zeros_like(tv), use_locking=True) for tv in accum_vars])
-    with tf.control_dependencies([accum_ops, tf.Print(accum_steps_const, [accum_steps_const], "UPDATING GRADIENTS: ")]):
+    with tf.control_dependencies([accum_ops]):
       (new_accum_vars, _) = tf.clip_by_global_norm(accum_vars, clip_norm=1.0)
       apply_grads = optimizer.apply_gradients(zip(new_accum_vars, tvars), global_step=global_step)
       with tf.control_dependencies([apply_grads]):
