@@ -304,7 +304,7 @@ def embedding_postprocessor(input_tensor,
         full_position_embeddings_latter = tf.slice(full_position_embeddings_latter, [0, 0],
                                        [seq_length - 512, -1])
 
-        full_position_embeddings = tf.concat([full_position_embeddings_former, 
+        position_embeddings = tf.concat([full_position_embeddings_former, 
             full_position_embeddings_latter], 1, name="full_position_embeddings_concat")
 
       num_dims = len(output.shape.as_list())

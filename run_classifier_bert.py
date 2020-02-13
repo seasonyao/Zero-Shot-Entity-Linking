@@ -191,31 +191,32 @@ def file_based_input_fn_builder(input_file, num_cands, seq_length, is_training,
     #   d = tf.data.TFRecordDataset(input_file, num_parallel_reads = len(input_file))
     # else:
     #   d = tf.data.TFRecordDataset(input_file[0])
+    d = tf.data.TFRecordDataset(input_file)
 
-    # if is_training:
-    #   d = d.repeat()
-    #   d = d.shuffle(buffer_size=100)
     if is_training:
-      d = tf.data.Dataset.from_tensor_slices(tf.constant(input_file))
       d = d.repeat()
-      d = d.shuffle(buffer_size=len(input_file))
-
-      # `cycle_length` is the number of parallel files that get read.
-      cycle_length = num_cpu_threads
-
-      # `sloppy` mode means that the interleaving is not exact. This adds
-      # even more randomness to the training pipeline.
-      d = d.apply(
-          tf.data.experimental.parallel_interleave(
-              tf.data.TFRecordDataset,
-              sloppy=is_training,
-              cycle_length=cycle_length))
       d = d.shuffle(buffer_size=100)
-    else:
-      d = tf.data.TFRecordDataset(input_file)
-      # Since we evaluate for a fixed number of steps we don't want to encounter
-      # out-of-range exceptions.
-      d = d.repeat()
+    # if is_training:
+    #   d = tf.data.Dataset.from_tensor_slices(tf.constant(input_file))
+    #   d = d.repeat()
+    #   d = d.shuffle(buffer_size=len(input_file))
+
+    #   # `cycle_length` is the number of parallel files that get read.
+    #   cycle_length = num_cpu_threads
+
+    #   # `sloppy` mode means that the interleaving is not exact. This adds
+    #   # even more randomness to the training pipeline.
+    #   d = d.apply(
+    #       tf.data.experimental.parallel_interleave(
+    #           tf.data.TFRecordDataset,
+    #           sloppy=is_training,
+    #           cycle_length=cycle_length))
+    #   d = d.shuffle(buffer_size=100)
+    # else:
+    #   d = tf.data.TFRecordDataset(input_file)
+    #   # Since we evaluate for a fixed number of steps we don't want to encounter
+    #   # out-of-range exceptions.
+    #   d = d.repeat()
 
 
     d = d.apply(
@@ -242,13 +243,37 @@ def create_zeshel_model(bert_config, is_training, input_ids, input_mask,
   input_mask = tf.reshape(input_mask, [-1, seq_len])
   mention_ids = tf.reshape(mention_ids, [-1, seq_len])
 
+  # split-------------------------------------
+  input_ids = tf.split(input_ids, 4, 0)
+  segment_ids = tf.split(segment_ids, 4, 0)
+  input_mask = tf.split(input_mask, 4, 0)
+  mention_ids = tf.split(mention_ids, 4, 0)
+  # ------------------------------------------
+
+  input_ids = input_ids[0]
+  segment_ids = segment_ids[0]
+  input_mask = input_mask[0]
+  mention_ids = mention_ids[0]
+
   if is_training:
     word_ids = tf.reshape(word_ids, [-1, seq_len])
+
+    word_ids = tf.split(word_ids, 4, 0)
+    word_ids = word_ids[0]
+
 
     random_mask = tf.random_uniform(input_ids.shape)
     masked_lm_positions = tf.cast(random_mask < FLAGS.mask_lm_rate, tf.int32)
     masked_lm_positions *= word_ids
     masked_lm_input_ids = masked_lm_positions * FLAGS.mask_word_id + (1 - masked_lm_positions) * input_ids
+
+
+    tf.logging.info(input_ids.shape.as_list())
+    tf.logging.info(segment_ids.shape.as_list())
+    tf.logging.info(input_mask.shape.as_list())
+    tf.logging.info(mention_ids.shape.as_list())
+    tf.logging.info(word_ids.shape.as_list())
+    tf.logging.info(masked_lm_input_ids.shape.as_list())
 
     model = modeling.BertModel(
         config=bert_config,
@@ -269,9 +294,15 @@ def create_zeshel_model(bert_config, is_training, input_ids, input_mask,
         token_type_ids=segment_ids,
         use_one_hot_embeddings=use_one_hot_embeddings)
 
-
-
   output_layer = model.get_pooled_output()
+
+  # expansion-------------------------------------
+  
+  tf.logging.info(output_layer.shape.as_list())
+
+
+  assert 1==0
+  # ----------------------------------------------
 
   hidden_size = output_layer.shape[-1].value
 
@@ -477,9 +508,9 @@ def main(_):
       predict_batch_size=FLAGS.predict_batch_size)
 
   if FLAGS.do_train:
-    #train_file = os.path.join(FLAGS.data_dir, "train_central_mention.tfrecord")
-    train_file = []
-    train_file.append(os.path.join(FLAGS.data_dir, "train_central_mention.tfrecord"))
+    train_file = os.path.join(FLAGS.data_dir, "train_central_mention.tfrecord")
+    #train_file = []
+    #train_file.append(os.path.join(FLAGS.data_dir, "train_central_mention.tfrecord"))
 
     tf.logging.info("***** Running training *****")
     tf.logging.info("  Train file= %s", train_file)
