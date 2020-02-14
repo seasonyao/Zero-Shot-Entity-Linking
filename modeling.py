@@ -274,7 +274,7 @@ def embedding_postprocessor(input_tensor,
   if use_position_embeddings:
     assert_op = tf.assert_less_equal(seq_length, max_position_embeddings)
     with tf.control_dependencies([assert_op]):
-      if max_position_embeddings<=512:
+      if seq_length<=512:
         full_position_embeddings = tf.get_variable(
             name=position_embedding_name,
             shape=[max_position_embeddings, width],

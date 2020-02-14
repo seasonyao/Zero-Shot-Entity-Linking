@@ -267,13 +267,13 @@ def create_zeshel_model(bert_config, is_training, input_ids, input_mask,
     masked_lm_positions *= word_ids
     masked_lm_input_ids = masked_lm_positions * FLAGS.mask_word_id + (1 - masked_lm_positions) * input_ids
 
-
-    tf.logging.info(input_ids.shape.as_list())
-    tf.logging.info(segment_ids.shape.as_list())
-    tf.logging.info(input_mask.shape.as_list())
-    tf.logging.info(mention_ids.shape.as_list())
-    tf.logging.info(word_ids.shape.as_list())
-    tf.logging.info(masked_lm_input_ids.shape.as_list())
+    #[16, 256]
+    # tf.logging.info(input_ids.shape.as_list())
+    # tf.logging.info(segment_ids.shape.as_list())
+    # tf.logging.info(input_mask.shape.as_list())
+    # tf.logging.info(mention_ids.shape.as_list())
+    # tf.logging.info(word_ids.shape.as_list())
+    # tf.logging.info(masked_lm_input_ids.shape.as_list())
 
     model = modeling.BertModel(
         config=bert_config,
@@ -294,14 +294,21 @@ def create_zeshel_model(bert_config, is_training, input_ids, input_mask,
         token_type_ids=segment_ids,
         use_one_hot_embeddings=use_one_hot_embeddings)
 
-  output_layer = model.get_pooled_output()
+  #[16, 768]
+  real_output_layer = model.get_pooled_output()
 
   # expansion-------------------------------------
   
-  tf.logging.info(output_layer.shape.as_list())
+  # tf.logging.info(real_output_layer.shape.as_list()) 
+  # tf.logging.info(labels.shape.as_list()) 
 
+  #[64, 768]
+  output_layer = tf.concat([real_output_layer, real_output_layer[1:], real_output_layer[1:],
+                    real_output_layer[1:], real_output_layer[1:4]], 0)
 
-  assert 1==0
+  #tf.logging.info(output_layer.shape.as_list()) 
+
+  #assert 1==0
   # ----------------------------------------------
 
   hidden_size = output_layer.shape[-1].value
@@ -366,19 +373,29 @@ def model_fn_builder(bert_config, init_checkpoint, learning_rate,
     initialized_variable_names = {}
     scaffold_fn = None
     if init_checkpoint:
-      # (assignment_map, initialized_variable_names
-      # ) = bert.modeling.get_assignment_map_from_checkpoint(tvars, init_checkpoint)
       (assignment_map, initialized_variable_names
-      ) = bert.modeling.get_assignment_map_from_checkpoint_for_larger_window_size(tvars, init_checkpoint)
-      if use_tpu:
+      ) = bert.modeling.get_assignment_map_from_checkpoint(tvars, init_checkpoint)
+      # (assignment_map, initialized_variable_names
+      # ) = bert.modeling.get_assignment_map_from_checkpoint_for_larger_window_size(tvars, init_checkpoint)
+      # if use_tpu:
 
         def tpu_scaffold():
           tf.train.init_from_checkpoint(init_checkpoint, assignment_map)
+          if FLAGS.max_seq_length>512:
+            tf.train.init_from_checkpoint(init_checkpoint, {"bert/embeddings/position_embeddings": "bert/embeddings/position_embeddings_former"})
+            tf.train.init_from_checkpoint(init_checkpoint, {"bert/embeddings/position_embeddings": "bert/embeddings/position_embeddings_latter"})
+          else:
+            tf.train.init_from_checkpoint(init_checkpoint, {"bert/embeddings/position_embeddings": "bert/embeddings/position_embeddings"})
           return tf.train.Scaffold()
 
         scaffold_fn = tpu_scaffold
       else:
         tf.train.init_from_checkpoint(init_checkpoint, assignment_map)
+        if FLAGS.max_seq_length>512:
+          tf.train.init_from_checkpoint(init_checkpoint, {"bert/embeddings/position_embeddings": "bert/embeddings/position_embeddings_former"})
+          tf.train.init_from_checkpoint(init_checkpoint, {"bert/embeddings/position_embeddings": "bert/embeddings/position_embeddings_latter"})
+        else:
+          tf.train.init_from_checkpoint(init_checkpoint, {"bert/embeddings/position_embeddings": "bert/embeddings/position_embeddings"})
 
     tf.logging.info("**** Trainable Variables ****")
     for var in tvars:
