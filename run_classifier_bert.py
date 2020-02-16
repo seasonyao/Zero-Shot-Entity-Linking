@@ -24,7 +24,7 @@ import os
 import modeling
 import bert
 from bert import optimization
-from bert import optimization_with_gradient_accumulate
+#from bert import optimization_with_gradient_accumulate
 from bert import tokenization
 #import tensorflow as tf
 import tensorflow.compat.v1 as tf
@@ -183,7 +183,6 @@ def file_based_input_fn_builder(input_file, num_cands, seq_length, is_training,
   def input_fn(params):
     """The actual input function."""
     batch_size = params["batch_size"]
-    num_cpu_threads = len(input_file)
 
     # # For training, we want a lot of parallel reading and shuffling.
     # # For eval, we want no shuffling and parallel reading doesn't matter.
@@ -191,40 +190,50 @@ def file_based_input_fn_builder(input_file, num_cands, seq_length, is_training,
     #   d = tf.data.TFRecordDataset(input_file, num_parallel_reads = len(input_file))
     # else:
     #   d = tf.data.TFRecordDataset(input_file[0])
-    d = tf.data.TFRecordDataset(input_file)
+
+    # d = tf.data.TFRecordDataset(input_file)
+
+    # if is_training:
+    #   d = d.repeat()
+    #   d = d.shuffle(buffer_size=100)
+
 
     if is_training:
+      num_cpu_threads = len(input_file)
+
+      d = tf.data.Dataset.from_tensor_slices(tf.constant(input_file))
       d = d.repeat()
+      d = d.shuffle(buffer_size=len(input_file))
+
+      # `cycle_length` is the number of parallel files that get read.
+      cycle_length = num_cpu_threads
+
+      # `sloppy` mode means that the interleaving is not exact. This adds
+      # even more randomness to the training pipeline.
+      d = d.apply(
+          tf.data.experimental.parallel_interleave(
+              tf.data.TFRecordDataset,
+              sloppy=is_training,
+              cycle_length=cycle_length))
       d = d.shuffle(buffer_size=100)
-    # if is_training:
-    #   d = tf.data.Dataset.from_tensor_slices(tf.constant(input_file))
-    #   d = d.repeat()
-    #   d = d.shuffle(buffer_size=len(input_file))
 
-    #   # `cycle_length` is the number of parallel files that get read.
-    #   cycle_length = num_cpu_threads
+      d = d.apply(
+          tf.data.experimental.map_and_batch(
+              lambda record: _decode_record(record, name_to_features),
+              batch_size=batch_size,
+              num_parallel_batches=num_cpu_threads,
+              drop_remainder=drop_remainder))
+    else:
+      d = tf.data.TFRecordDataset(input_file)
+      # Since we evaluate for a fixed number of steps we don't want to encounter
+      # out-of-range exceptions.
+      d = d.repeat()
 
-    #   # `sloppy` mode means that the interleaving is not exact. This adds
-    #   # even more randomness to the training pipeline.
-    #   d = d.apply(
-    #       tf.data.experimental.parallel_interleave(
-    #           tf.data.TFRecordDataset,
-    #           sloppy=is_training,
-    #           cycle_length=cycle_length))
-    #   d = d.shuffle(buffer_size=100)
-    # else:
-    #   d = tf.data.TFRecordDataset(input_file)
-    #   # Since we evaluate for a fixed number of steps we don't want to encounter
-    #   # out-of-range exceptions.
-    #   d = d.repeat()
-
-
-    d = d.apply(
-        tf.data.experimental.map_and_batch(
-            lambda record: _decode_record(record, name_to_features),
-            batch_size=batch_size,
-            num_parallel_batches=num_cpu_threads,
-            drop_remainder=drop_remainder))
+      d = d.apply(
+          tf.data.experimental.map_and_batch(
+              lambda record: _decode_record(record, name_to_features),
+              batch_size=batch_size,
+              drop_remainder=drop_remainder))
 
     return d
 
@@ -243,19 +252,20 @@ def create_zeshel_model(bert_config, is_training, input_ids, input_mask,
   input_mask = tf.reshape(input_mask, [-1, seq_len])
   mention_ids = tf.reshape(mention_ids, [-1, seq_len])
 
-  # split-------------------------------------
-  input_ids = tf.split(input_ids, 4, 0)
-  segment_ids = tf.split(segment_ids, 4, 0)
-  input_mask = tf.split(input_mask, 4, 0)
-  mention_ids = tf.split(mention_ids, 4, 0)
-  # ------------------------------------------
-
-  input_ids = input_ids[0]
-  segment_ids = segment_ids[0]
-  input_mask = input_mask[0]
-  mention_ids = mention_ids[0]
 
   if is_training:
+    # split-------------------------------------
+    input_ids = tf.split(input_ids, 4, 0)
+    segment_ids = tf.split(segment_ids, 4, 0)
+    input_mask = tf.split(input_mask, 4, 0)
+    mention_ids = tf.split(mention_ids, 4, 0)
+
+    input_ids = input_ids[0]
+    segment_ids = segment_ids[0]
+    input_mask = input_mask[0]
+    mention_ids = mention_ids[0]
+    # ------------------------------------------
+
     word_ids = tf.reshape(word_ids, [-1, seq_len])
 
     word_ids = tf.split(word_ids, 4, 0)
@@ -284,6 +294,22 @@ def create_zeshel_model(bert_config, is_training, input_ids, input_mask,
         token_type_ids=segment_ids,
         use_one_hot_embeddings=use_one_hot_embeddings)
 
+    #[16, 768]
+    real_output_layer = model.get_pooled_output()
+
+    # expansion-------------------------------------
+    
+    # tf.logging.info(real_output_layer.shape.as_list()) 
+    # tf.logging.info(labels.shape.as_list()) 
+
+    #[64, 768]
+    output_layer = tf.concat([real_output_layer, real_output_layer[1:], real_output_layer[1:],
+                    real_output_layer[1:], real_output_layer[1:4]], 0)
+    #tf.logging.info(output_layer.shape.as_list()) 
+
+    #assert 1==0
+    # ----------------------------------------------
+
   else:
     model = modeling.BertModel(
         config=bert_config,
@@ -294,22 +320,8 @@ def create_zeshel_model(bert_config, is_training, input_ids, input_mask,
         token_type_ids=segment_ids,
         use_one_hot_embeddings=use_one_hot_embeddings)
 
-  #[16, 768]
-  real_output_layer = model.get_pooled_output()
+    output_layer = model.get_pooled_output()
 
-  # expansion-------------------------------------
-  
-  # tf.logging.info(real_output_layer.shape.as_list()) 
-  # tf.logging.info(labels.shape.as_list()) 
-
-  #[64, 768]
-  output_layer = tf.concat([real_output_layer, real_output_layer[1:], real_output_layer[1:],
-                    real_output_layer[1:], real_output_layer[1:4]], 0)
-
-  #tf.logging.info(output_layer.shape.as_list()) 
-
-  #assert 1==0
-  # ----------------------------------------------
 
   hidden_size = output_layer.shape[-1].value
 
@@ -377,8 +389,7 @@ def model_fn_builder(bert_config, init_checkpoint, learning_rate,
       ) = bert.modeling.get_assignment_map_from_checkpoint(tvars, init_checkpoint)
       # (assignment_map, initialized_variable_names
       # ) = bert.modeling.get_assignment_map_from_checkpoint_for_larger_window_size(tvars, init_checkpoint)
-      # if use_tpu:
-
+      if use_tpu:
         def tpu_scaffold():
           tf.train.init_from_checkpoint(init_checkpoint, assignment_map)
           if FLAGS.max_seq_length>512:
@@ -525,9 +536,9 @@ def main(_):
       predict_batch_size=FLAGS.predict_batch_size)
 
   if FLAGS.do_train:
-    train_file = os.path.join(FLAGS.data_dir, "train_central_mention.tfrecord")
-    #train_file = []
-    #train_file.append(os.path.join(FLAGS.data_dir, "train_central_mention.tfrecord"))
+    #train_file = os.path.join(FLAGS.data_dir, "train_central_mention.tfrecord")
+    train_file = []
+    train_file.append(os.path.join(FLAGS.data_dir, "train_central_mention.tfrecord"))
 
     tf.logging.info("***** Running training *****")
     tf.logging.info("  Train file= %s", train_file)
