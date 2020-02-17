@@ -255,22 +255,25 @@ def create_zeshel_model(bert_config, is_training, input_ids, input_mask,
 
   if is_training:
     # split-------------------------------------
-    input_ids = tf.split(input_ids, 4, 0)
-    segment_ids = tf.split(segment_ids, 4, 0)
-    input_mask = tf.split(input_mask, 4, 0)
-    mention_ids = tf.split(mention_ids, 4, 0)
-
-    input_ids = input_ids[0]
-    segment_ids = segment_ids[0]
-    input_mask = input_mask[0]
-    mention_ids = mention_ids[0]
-    # ------------------------------------------
-
     word_ids = tf.reshape(word_ids, [-1, seq_len])
 
-    word_ids = tf.split(word_ids, 4, 0)
-    word_ids = word_ids[0]
-
+    input_ids = tf.split(input_ids, 64, 0)
+    segment_ids = tf.split(segment_ids, 64, 0)
+    input_mask = tf.split(input_mask, 64, 0)
+    mention_ids = tf.split(mention_ids, 64, 0)
+    word_ids = tf.split(word_ids, 64, 0)
+    
+    # input_ids = input_ids[:16]
+    # segment_ids = segment_ids[:16]
+    # input_mask = input_mask[:16]
+    # mention_ids = mention_ids[:16]
+    # word_ids = word_ids[:16]
+    input_ids = tf.concat([input_ids[0], tf.reshape(input_ids[16:31], [-1, seq_len])], 0)
+    segment_ids = tf.concat([segment_ids[0], tf.reshape(segment_ids[16:31], [-1, seq_len])], 0)
+    input_mask = tf.concat([input_mask[0], tf.reshape(input_mask[16:31], [-1, seq_len])], 0)
+    mention_ids = tf.concat([mention_ids[0], tf.reshape(mention_ids[16:31], [-1, seq_len])], 0)
+    word_ids = tf.concat([word_ids[0], tf.reshape(word_ids[16:31], [-1, seq_len])], 0)
+    # ------------------------------------------
 
     random_mask = tf.random_uniform(input_ids.shape)
     masked_lm_positions = tf.cast(random_mask < FLAGS.mask_lm_rate, tf.int32)
