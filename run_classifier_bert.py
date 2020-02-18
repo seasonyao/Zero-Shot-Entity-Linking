@@ -137,7 +137,7 @@ flags.DEFINE_integer(
     "Number of training examples.")
 
 flags.DEFINE_float(
-    "mask_lm_rate", 0.15, 
+    "mask_lm_rate", 0.0, 
     "The initial learning rate for Adam.")
 
 flags.DEFINE_integer(
@@ -263,16 +263,17 @@ def create_zeshel_model(bert_config, is_training, input_ids, input_mask,
     mention_ids = tf.split(mention_ids, 64, 0)
     word_ids = tf.split(word_ids, 64, 0)
     
-    # input_ids = input_ids[:16]
-    # segment_ids = segment_ids[:16]
-    # input_mask = input_mask[:16]
-    # mention_ids = mention_ids[:16]
-    # word_ids = word_ids[:16]
-    input_ids = tf.concat([input_ids[0], tf.reshape(input_ids[16:31], [-1, seq_len])], 0)
-    segment_ids = tf.concat([segment_ids[0], tf.reshape(segment_ids[16:31], [-1, seq_len])], 0)
-    input_mask = tf.concat([input_mask[0], tf.reshape(input_mask[16:31], [-1, seq_len])], 0)
-    mention_ids = tf.concat([mention_ids[0], tf.reshape(mention_ids[16:31], [-1, seq_len])], 0)
-    word_ids = tf.concat([word_ids[0], tf.reshape(word_ids[16:31], [-1, seq_len])], 0)
+    input_ids = tf.concat([input_ids[0], tf.reshape(input_ids[1:16], [-1, seq_len])], 0)
+    segment_ids = tf.concat([segment_ids[0], tf.reshape(segment_ids[1:16], [-1, seq_len])], 0)
+    input_mask = tf.concat([input_mask[0], tf.reshape(input_mask[1:16], [-1, seq_len])], 0)
+    mention_ids = tf.concat([mention_ids[0], tf.reshape(mention_ids[1:16], [-1, seq_len])], 0)
+    word_ids = tf.concat([word_ids[0], tf.reshape(word_ids[1:16], [-1, seq_len])], 0)
+
+    # input_ids = tf.concat([input_ids[0], tf.reshape(input_ids[16:31], [-1, seq_len])], 0)
+    # segment_ids = tf.concat([segment_ids[0], tf.reshape(segment_ids[16:31], [-1, seq_len])], 0)
+    # input_mask = tf.concat([input_mask[0], tf.reshape(input_mask[16:31], [-1, seq_len])], 0)
+    # mention_ids = tf.concat([mention_ids[0], tf.reshape(mention_ids[16:31], [-1, seq_len])], 0)
+    # word_ids = tf.concat([word_ids[0], tf.reshape(word_ids[16:31], [-1, seq_len])], 0)
     # ------------------------------------------
 
     random_mask = tf.random_uniform(input_ids.shape)
@@ -395,20 +396,35 @@ def model_fn_builder(bert_config, init_checkpoint, learning_rate,
       if use_tpu:
         def tpu_scaffold():
           tf.train.init_from_checkpoint(init_checkpoint, assignment_map)
-          if FLAGS.max_seq_length>512:
+          if FLAGS.max_seq_length>1024:
+            pass
+            tf.train.init_from_checkpoint(init_checkpoint, {"bert/embeddings/position_embeddings": "bert/embeddings/position_embeddings_first"})
+            tf.train.init_from_checkpoint(init_checkpoint, {"bert/embeddings/position_embeddings": "bert/embeddings/position_embeddings_second"})
+            tf.train.init_from_checkpoint(init_checkpoint, {"bert/embeddings/position_embeddings": "bert/embeddings/position_embeddings_third"})
+          elif FLAGS.max_seq_length>512:
+            pass
             tf.train.init_from_checkpoint(init_checkpoint, {"bert/embeddings/position_embeddings": "bert/embeddings/position_embeddings_former"})
             tf.train.init_from_checkpoint(init_checkpoint, {"bert/embeddings/position_embeddings": "bert/embeddings/position_embeddings_latter"})
+            tf.train.init_from_checkpoint(init_checkpoint, {"bert/embeddings/position_embeddings": "bert/embeddings/position_embeddings_third"})
           else:
+            pass
             tf.train.init_from_checkpoint(init_checkpoint, {"bert/embeddings/position_embeddings": "bert/embeddings/position_embeddings"})
           return tf.train.Scaffold()
 
         scaffold_fn = tpu_scaffold
       else:
         tf.train.init_from_checkpoint(init_checkpoint, assignment_map)
+        if FLAGS.max_seq_length>1024:
+          pass
+          tf.train.init_from_checkpoint(init_checkpoint, {"bert/embeddings/position_embeddings": "bert/embeddings/position_embeddings_first"})
+          tf.train.init_from_checkpoint(init_checkpoint, {"bert/embeddings/position_embeddings": "bert/embeddings/position_embeddings_second"})
+          tf.train.init_from_checkpoint(init_checkpoint, {"bert/embeddings/position_embeddings": "bert/embeddings/position_embeddings_third"})
         if FLAGS.max_seq_length>512:
+          pass
           tf.train.init_from_checkpoint(init_checkpoint, {"bert/embeddings/position_embeddings": "bert/embeddings/position_embeddings_former"})
           tf.train.init_from_checkpoint(init_checkpoint, {"bert/embeddings/position_embeddings": "bert/embeddings/position_embeddings_latter"})
         else:
+          pass
           tf.train.init_from_checkpoint(init_checkpoint, {"bert/embeddings/position_embeddings": "bert/embeddings/position_embeddings"})
 
     tf.logging.info("**** Trainable Variables ****")
@@ -541,6 +557,8 @@ def main(_):
   if FLAGS.do_train:
     #train_file = os.path.join(FLAGS.data_dir, "train_central_mention.tfrecord")
     train_file = []
+    train_file.append(os.path.join(FLAGS.data_dir, "train_central_mention.tfrecord"))
+    train_file.append(os.path.join(FLAGS.data_dir, "train_central_mention.tfrecord"))
     train_file.append(os.path.join(FLAGS.data_dir, "train_central_mention.tfrecord"))
 
     tf.logging.info("***** Running training *****")

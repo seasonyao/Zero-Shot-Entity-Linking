@@ -291,7 +291,7 @@ def embedding_postprocessor(input_tensor,
         position_embeddings = tf.slice(full_position_embeddings, [0, 0],
                                        [seq_length, -1])
 
-      else:
+      elif seq_length<=1024:
         full_position_embeddings_former = tf.get_variable(
             name=position_embedding_name+"_former",
             shape=[512, width],
@@ -306,6 +306,26 @@ def embedding_postprocessor(input_tensor,
 
         position_embeddings = tf.concat([full_position_embeddings_former, 
             full_position_embeddings_latter], 0, name="position_embeddings_concat")
+
+      else:
+        full_position_embeddings_first = tf.get_variable(
+            name=position_embedding_name+"_first",
+            shape=[512, width],
+            initializer=create_initializer(initializer_range))
+        full_position_embeddings_second = tf.get_variable(
+            name=position_embedding_name+"_second",
+            shape=[512, width],
+            initializer=create_initializer(initializer_range))
+        full_position_embeddings_third = tf.get_variable(
+            name=position_embedding_name+"_third",
+            shape=[512, width],
+            initializer=create_initializer(initializer_range))
+
+        full_position_embeddings_latter = tf.slice(full_position_embeddings_third, [0, 0],
+                                       [seq_length - 1024, -1])
+
+        position_embeddings = tf.concat([full_position_embeddings_first, full_position_embeddings_second,
+            full_position_embeddings_third], 0, name="position_embeddings_concat")
 
       num_dims = len(output.shape.as_list())
 
