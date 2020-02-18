@@ -215,7 +215,7 @@ def file_based_input_fn_builder(input_file, num_cands, seq_length, is_training,
               tf.data.TFRecordDataset,
               sloppy=is_training,
               cycle_length=cycle_length))
-      d = d.shuffle(buffer_size=100)
+      d = d.shuffle(buffer_size=1000)
 
       d = d.apply(
           tf.data.experimental.map_and_batch(

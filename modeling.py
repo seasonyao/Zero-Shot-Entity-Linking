@@ -321,7 +321,7 @@ def embedding_postprocessor(input_tensor,
             shape=[512, width],
             initializer=create_initializer(initializer_range))
 
-        full_position_embeddings_latter = tf.slice(full_position_embeddings_third, [0, 0],
+        full_position_embeddings_third = tf.slice(full_position_embeddings_third, [0, 0],
                                        [seq_length - 1024, -1])
 
         position_embeddings = tf.concat([full_position_embeddings_first, full_position_embeddings_second,
