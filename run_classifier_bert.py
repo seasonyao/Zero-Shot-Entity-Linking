@@ -302,8 +302,8 @@ def create_zeshel_model(bert_config, is_training, input_ids, input_mask,
     # tf.logging.info(labels.shape.as_list()) 
 
     #[64, 768]
-    output_layer = tf.concat([real_output_layer[:1], tf.random_shuffle(tf.concat([real_output_layer[1:], 
-              real_output_layer[1:], real_output_layer[1:], real_output_layer[1:], real_output_layer[1:4]], 0))], 0)
+    output_layer = tf.concat([real_output_layer[:1], real_output_layer[1:], real_output_layer[1:], 
+                    real_output_layer[1:], real_output_layer[1:], real_output_layer[1:4]], 0)
     #tf.logging.info(output_layer.shape.as_list()) 
 
     #assert 1==0
