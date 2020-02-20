@@ -270,11 +270,27 @@ def embedding_postprocessor(input_tensor,
     token_type_embeddings = tf.reshape(token_type_embeddings,
                                        [batch_size, seq_length, width])
     output += token_type_embeddings
-
+  
+  #init every 512 seperately with bert-base model
   if use_position_embeddings:
     assert_op = tf.assert_less_equal(seq_length, max_position_embeddings)
     with tf.control_dependencies([assert_op]):
-      if seq_length<=512:
+      #init with nearest token rule
+      if seq_length==1024:
+        full_position_embeddings_former = tf.get_variable(
+            name=position_embedding_name+"_former",
+            shape=[512, width],
+            initializer=create_initializer(initializer_range))
+        full_position_embeddings_latter = tf.get_variable(
+            name=position_embedding_name+"_latter",
+            shape=[512, width],
+            initializer=create_initializer(initializer_range))
+
+        position_embeddings = tf.stack([full_position_embeddings_former,
+            full_position_embeddings_latter], axis=-1).reshape([-1]).reshape([-1, width],
+            name="large_window_size_position_embeddings")
+      
+      elif seq_length<=512:
         full_position_embeddings = tf.get_variable(
             name=position_embedding_name,
             shape=[max_position_embeddings, width],
@@ -305,7 +321,7 @@ def embedding_postprocessor(input_tensor,
                                        [seq_length - 512, -1])
 
         position_embeddings = tf.concat([full_position_embeddings_former, 
-            full_position_embeddings_latter], 0, name="position_embeddings_concat")
+            full_position_embeddings_latter], 0, name="large_window_size_position_embeddings")
 
       else:
         full_position_embeddings_first = tf.get_variable(
@@ -325,7 +341,7 @@ def embedding_postprocessor(input_tensor,
                                        [seq_length - 1024, -1])
 
         position_embeddings = tf.concat([full_position_embeddings_first, full_position_embeddings_second,
-            full_position_embeddings_third], 0, name="position_embeddings_concat")
+            full_position_embeddings_third], 0, name="large_window_size_position_embeddings")
 
       num_dims = len(output.shape.as_list())
 
@@ -339,6 +355,7 @@ def embedding_postprocessor(input_tensor,
       position_embeddings = tf.reshape(position_embeddings,
                                        position_broadcast_shape)
       output += position_embeddings
+
 
   output = layer_norm_and_dropout(output, dropout_prob)
   return output
