@@ -241,8 +241,9 @@ def file_based_input_fn_builder(input_file, num_cands, seq_length, is_training,
 
 
 def create_zeshel_model(bert_config, is_training, input_ids, input_mask,
-     segment_ids, mention_ids, labels, use_one_hot_embeddings, word_ids=None):
+     segment_ids, mention_ids, labels, use_one_hot_embeddings, num_train_steps, word_ids=None):
   """Creates a classification model."""
+
 
   num_labels = input_ids.shape[1].value
   seq_len = input_ids.shape[-1].value
@@ -257,23 +258,17 @@ def create_zeshel_model(bert_config, is_training, input_ids, input_mask,
     # split-------------------------------------
     word_ids = tf.reshape(word_ids, [-1, seq_len])
 
-    input_ids = tf.split(input_ids, 64, 0)
-    segment_ids = tf.split(segment_ids, 64, 0)
-    input_mask = tf.split(input_mask, 64, 0)
-    mention_ids = tf.split(mention_ids, 64, 0)
-    word_ids = tf.split(word_ids, 64, 0)
-    
-    input_ids = tf.concat([input_ids[0], tf.reshape(input_ids[1:16], [-1, seq_len])], 0)
-    segment_ids = tf.concat([segment_ids[0], tf.reshape(segment_ids[1:16], [-1, seq_len])], 0)
-    input_mask = tf.concat([input_mask[0], tf.reshape(input_mask[1:16], [-1, seq_len])], 0)
-    mention_ids = tf.concat([mention_ids[0], tf.reshape(mention_ids[1:16], [-1, seq_len])], 0)
-    word_ids = tf.concat([word_ids[0], tf.reshape(word_ids[1:16], [-1, seq_len])], 0)
+    input_ids = tf.concat([input_ids[:1], tf.random_shuffle(input_ids[1:], seed=num_train_steps)], 0)
+    segment_ids = tf.concat([segment_ids[:1], tf.random_shuffle(segment_ids[1:], seed=num_train_steps)], 0)
+    input_mask = tf.concat([input_mask[:1], tf.random_shuffle(input_mask[1:], seed=num_train_steps)], 0)
+    mention_ids = tf.concat([mention_ids[:1], tf.random_shuffle(mention_ids[1:], seed=num_train_steps)], 0)
+    word_ids = tf.concat([word_ids[:1], tf.random_shuffle(word_ids[1:], seed=num_train_steps)], 0)
 
-    # input_ids = tf.concat([input_ids[0], tf.reshape(input_ids[16:31], [-1, seq_len])], 0)
-    # segment_ids = tf.concat([segment_ids[0], tf.reshape(segment_ids[16:31], [-1, seq_len])], 0)
-    # input_mask = tf.concat([input_mask[0], tf.reshape(input_mask[16:31], [-1, seq_len])], 0)
-    # mention_ids = tf.concat([mention_ids[0], tf.reshape(mention_ids[16:31], [-1, seq_len])], 0)
-    # word_ids = tf.concat([word_ids[0], tf.reshape(word_ids[16:31], [-1, seq_len])], 0)
+    input_ids = input_ids[:16]
+    segment_ids = segment_ids[:16]
+    input_mask = input_mask[:16]
+    mention_ids = mention_ids[:16]
+    word_ids = word_ids[:16]
     # ------------------------------------------
 
     random_mask = tf.random_uniform(input_ids.shape)
@@ -307,8 +302,8 @@ def create_zeshel_model(bert_config, is_training, input_ids, input_mask,
     # tf.logging.info(labels.shape.as_list()) 
 
     #[64, 768]
-    output_layer = tf.concat([real_output_layer, real_output_layer[1:], real_output_layer[1:],
-                    real_output_layer[1:], real_output_layer[1:4]], 0)
+    output_layer = tf.concat([real_output_layer[:1], tf.random_shuffle(tf.concat([real_output_layer[1:], 
+              real_output_layer[1:], real_output_layer[1:], real_output_layer[1:], real_output_layer[1:4]], 0))], 0)
     #tf.logging.info(output_layer.shape.as_list()) 
 
     #assert 1==0
@@ -379,11 +374,11 @@ def model_fn_builder(bert_config, init_checkpoint, learning_rate,
       word_ids = features["word_ids"]
       (total_loss, per_example_loss, logits, probabilities) = create_zeshel_model(
           bert_config, is_training, input_ids, input_mask, segment_ids, mention_ids,
-          label_ids, use_one_hot_embeddings, word_ids)
+          label_ids, use_one_hot_embeddings, num_train_steps, word_ids)
     else:
       (total_loss, per_example_loss, logits, probabilities) = create_zeshel_model(
           bert_config, is_training, input_ids, input_mask, segment_ids, mention_ids,
-          label_ids, use_one_hot_embeddings)
+          label_ids, use_one_hot_embeddings, num_train_steps)
 
     tvars = tf.trainable_variables()
     initialized_variable_names = {}

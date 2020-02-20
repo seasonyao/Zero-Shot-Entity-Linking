@@ -276,21 +276,21 @@ def embedding_postprocessor(input_tensor,
     assert_op = tf.assert_less_equal(seq_length, max_position_embeddings)
     with tf.control_dependencies([assert_op]):
       #init with nearest token rule
-      if seq_length==1024:
-        full_position_embeddings_former = tf.get_variable(
-            name=position_embedding_name+"_former",
-            shape=[512, width],
-            initializer=create_initializer(initializer_range))
-        full_position_embeddings_latter = tf.get_variable(
-            name=position_embedding_name+"_latter",
-            shape=[512, width],
-            initializer=create_initializer(initializer_range))
+      # if seq_length==1024:
+      #   full_position_embeddings_former = tf.get_variable(
+      #       name=position_embedding_name+"_former",
+      #       shape=[512, width],
+      #       initializer=create_initializer(initializer_range))
+      #   full_position_embeddings_latter = tf.get_variable(
+      #       name=position_embedding_name+"_latter",
+      #       shape=[512, width],
+      #       initializer=create_initializer(initializer_range))
 
-        position_embeddings = tf.stack([full_position_embeddings_former,
-            full_position_embeddings_latter], axis=-1).reshape([-1]).reshape([-1, width],
-            name="large_window_size_position_embeddings")
-      
-      elif seq_length<=512:
+      #   position_embeddings = tf.reshape(tf.reshape(tf.stack([full_position_embeddings_former,
+      #       full_position_embeddings_latter], axis=-1), [-1]), [-1, width])
+
+      # elif seq_length<=512:
+      if seq_length<=512:
         full_position_embeddings = tf.get_variable(
             name=position_embedding_name,
             shape=[max_position_embeddings, width],

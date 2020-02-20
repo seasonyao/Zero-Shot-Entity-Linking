@@ -1,11 +1,13 @@
-1.关于position embedding的直接初始化方法的对比结果 1）不从bert里初始化 2）前512和后512分别初始化 3）将新的量看作是512的放大或者缩小版，根据一个token最可能和其左右两边最近的词有最相似的position embedding的原则进行init 4）可以针对embedding position在src tar上专门进行position-pretrain，用position-pretrain的结果进行init
+1.关于position embedding的直接初始化方法的对比结果 1）不从bert里初始化 2）前512和后512分别初始化 3）将新的量看作是512的放大或者缩小版，根据一个token最可能和其左右两边最近的词有最相似的position embedding的原则进行init 4) 把从512开始的position都用512这个位置的值进行初始化 5）可以针对embedding position在src tar上专门进行position-pretrain，用position-pretrain的结果进行init
+
+关于2）的解释：对于人类来说，假设之前只见过512长度的句子，出现1024长度的句子，有可能的做法会是把1024看成两个512的句子去对待。3）
 
 
 
 大致实验：
 without pretrain
 1.啥都不做，大家都不初始化embedding position不同窗口大小的结果-->证明window size确实很重要（从128到1536）
-2.不同position embedding init对于结果的影响-->希望证明提出的3）能最好且最合理地在不重新pretrain的情况下初始化embedding position这个重要的部分
+2.不同position embedding init对于结果的影响
 3.mask data augmentation 1)探究不同的mask率对结果的影响，从0-->1? 2)在不同window size上的效果 3）是否能达成我们的初衷，缓解过拟合？
 4.承接3提出easy2hard的训练方式的作用，以及使用mask的实现
 
