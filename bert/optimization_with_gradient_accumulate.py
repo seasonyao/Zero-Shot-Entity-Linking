@@ -70,8 +70,8 @@ def create_optimizer(loss, init_lr, num_train_steps, num_warmup_steps, accum_ste
     optimizer = tf.contrib.tpu.CrossShardOptimizer(optimizer)
 
   tvars = tf.trainable_variables()
-  accum_vars = [tf.Variable(tf.zeros_like(tv.initialized_value()), trainable=False) for tv in tvars]
-  #accum_vars = [tf.Variable(lambda: tf.zeros_like(tv.initialized_value()), trainable=False) for tv in tvars]
+  #accum_vars = [tf.Variable(tf.zeros_like(tv.initialized_value()), trainable=False) for tv in tvars]
+  accum_vars = [tf.Variable(lambda: tf.zeros_like(tv.initialized_value()), trainable=False) for tv in tvars]
 
   # all pretrained weights inside BERT starts with 'bert'
   #tvars = [tvar for tvar in tvars if not tvar.name.startswith('bert')]

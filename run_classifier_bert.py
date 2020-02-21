@@ -23,8 +23,8 @@ import csv
 import os
 import modeling
 import bert
-#from bert import optimization
-from bert import optimization_with_gradient_accumulate
+from bert import optimization
+#from bert import optimization_with_gradient_accumulate
 from bert import tokenization
 #import tensorflow as tf
 import tensorflow.compat.v1 as tf
@@ -143,8 +143,6 @@ flags.DEFINE_float(
 flags.DEFINE_integer(
     "mask_word_id", 103,
     "Maximum number of eval steps.")
-
-flags.DEFINE_integer("accum_steps", 1, "Gradient Accumulation: Number of steps before updating gradients")
 
 
 def file_based_input_fn_builder(input_file, num_cands, seq_length, is_training,
@@ -353,7 +351,7 @@ def create_zeshel_model(bert_config, is_training, input_ids, input_mask,
 
 
 def model_fn_builder(bert_config, init_checkpoint, learning_rate,
-                     num_train_steps, num_warmup_steps, accum_steps, use_tpu,
+                     num_train_steps, num_warmup_steps, use_tpu,
                      use_one_hot_embeddings):
   """Returns `model_fn` closure for TPUEstimator."""
 
@@ -434,10 +432,10 @@ def model_fn_builder(bert_config, init_checkpoint, learning_rate,
     output_spec = None
     if mode == tf.estimator.ModeKeys.TRAIN:
 
-      # train_op = optimization.create_optimizer(
+      train_op = optimization.create_optimizer(
+          total_loss, learning_rate, num_train_steps, num_warmup_steps, use_tpu)
+      # train_op = optimization_with_gradient_accumulate.create_optimizer(
       #     total_loss, learning_rate, num_train_steps, num_warmup_steps, use_tpu)
-      train_op = optimization_with_gradient_accumulate.create_optimizer(
-          total_loss, learning_rate, num_train_steps, num_warmup_steps, use_tpu, accum_steps=accum_steps)
 
       predictions = tf.argmax(logits, axis=-1, output_type=tf.int32)
       accuracy = tf.metrics.accuracy(
@@ -527,9 +525,8 @@ def main(_):
   num_warmup_steps = None
   if FLAGS.do_train:
     num_train_examples = FLAGS.num_train_examples
-    # num_train_steps = int(
-    #     num_train_examples / FLAGS.train_batch_size * FLAGS.num_train_epochs)
-    num_train_steps = int(num_train_examples / (FLAGS.train_batch_size * FLAGS.accum_steps) * FLAGS.num_train_epochs)
+    num_train_steps = int(
+        num_train_examples / FLAGS.train_batch_size * FLAGS.num_train_epochs)
     num_warmup_steps = int(num_train_steps * FLAGS.warmup_proportion)
 
   model_fn = model_fn_builder(
@@ -538,7 +535,6 @@ def main(_):
       learning_rate=FLAGS.learning_rate,
       num_train_steps=num_train_steps,
       num_warmup_steps=num_warmup_steps,
-      accum_steps=FLAGS.accum_steps,
       use_tpu=FLAGS.use_tpu,
       use_one_hot_embeddings=FLAGS.use_tpu)
 
