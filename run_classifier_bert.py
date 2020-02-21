@@ -202,20 +202,25 @@ def file_based_input_fn_builder(input_file, num_cands, seq_length, is_training,
       num_cpu_threads = len(input_file)
 
       d = tf.data.Dataset.from_tensor_slices(tf.constant(input_file))
-      d = d.repeat()
-      d = d.shuffle(buffer_size=len(input_file))
+      d = d.repeat(FLAGS.num_train_epochs)
+      #d = d.shuffle(buffer_size=len(input_file))
 
       # `cycle_length` is the number of parallel files that get read.
       cycle_length = num_cpu_threads
 
       # `sloppy` mode means that the interleaving is not exact. This adds
       # even more randomness to the training pipeline.
+      # d = d.apply(
+      #     tf.data.experimental.parallel_interleave(
+      #         tf.data.TFRecordDataset,
+      #         sloppy=is_training,
+      #         cycle_length=cycle_length))
       d = d.apply(
           tf.data.experimental.parallel_interleave(
               tf.data.TFRecordDataset,
-              sloppy=is_training,
+              sloppy=False,
               cycle_length=cycle_length))
-      d = d.shuffle(buffer_size=1000)
+      #d = d.shuffle(buffer_size=1000)
 
       d = d.apply(
           tf.data.experimental.map_and_batch(
@@ -343,7 +348,7 @@ def create_zeshel_model(bert_config, is_training, input_ids, input_mask,
     probabilities = tf.nn.softmax(logits, axis=-1)
 
     per_example_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
-        logits=logits, labels=labels)
+        logits=tf.reshape(logits,[-1, 16])[:1], labels=labels)
 
     loss = tf.reduce_mean(per_example_loss)
 
@@ -551,6 +556,7 @@ def main(_):
   if FLAGS.do_train:
     #train_file = os.path.join(FLAGS.data_dir, "train_central_mention.tfrecord")
     train_file = []
+    train_file.append(os.path.join(FLAGS.data_dir, "train_central_mention.tfrecord"))
     train_file.append(os.path.join(FLAGS.data_dir, "train_central_mention.tfrecord"))
     train_file.append(os.path.join(FLAGS.data_dir, "train_central_mention.tfrecord"))
     train_file.append(os.path.join(FLAGS.data_dir, "train_central_mention.tfrecord"))

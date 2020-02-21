@@ -1,6 +1,5 @@
 1.关于position embedding的直接初始化方法的对比结果 1）不从bert里初始化 2）前512和后512分别初始化 3）将新的量看作是512的放大或者缩小版，根据一个token最可能和其左右两边最近的词有最相似的position embedding的原则进行init 4) 把从512开始的position都用512这个位置的值进行初始化 5）可以针对embedding position在src tar上专门进行position-pretrain，用position-pretrain的结果进行init
 
-关于2）的解释：对于人类来说，假设之前只见过512长度的句子，出现1024长度的句子，有可能的做法会是把1024看成两个512的句子去对待。3）
 
 
 
@@ -14,3 +13,12 @@ without pretrain
 with pretrain
 1.以上方法加上原文提出的domain-adaptive-pretrain调出一个最佳结果完全打败原文
 2.专门针对embedding position进行pretrain，为了更好地初始化这个重要部分。需要打败1
+
+
+
+
+
+1.更改reduce_mean输入的per_example_loss的值，变为前16个
+2.减少graduent accumulate的learning rate
+3.扩大或者缩小accumulate的step
+4.使用shuffle和repeat以及interleaf来模拟原64
