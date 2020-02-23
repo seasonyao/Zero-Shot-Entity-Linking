@@ -202,7 +202,7 @@ def file_based_input_fn_builder(input_file, num_cands, seq_length, is_training,
       num_cpu_threads = len(input_file)
 
       d = tf.data.Dataset.from_tensor_slices(tf.constant(input_file))
-      d = d.repeat(FLAGS.num_train_epochs)
+      d = d.repeat(int(FLAGS.num_train_epochs))
       #d = d.shuffle(buffer_size=len(input_file))
 
       # `cycle_length` is the number of parallel files that get read.
@@ -250,7 +250,7 @@ def create_zeshel_model(bert_config, is_training, input_ids, input_mask,
   """Creates a classification model."""
 
 
-  num_labels = input_ids.shape[1].value
+  # num_labels = input_ids.shape[1].value
   seq_len = input_ids.shape[-1].value
 
   input_ids = tf.reshape(input_ids, [-1, seq_len])
@@ -263,17 +263,17 @@ def create_zeshel_model(bert_config, is_training, input_ids, input_mask,
     # split-------------------------------------
     word_ids = tf.reshape(word_ids, [-1, seq_len])
 
-    input_ids = tf.concat([input_ids[:1], tf.random_shuffle(input_ids[1:], seed=num_train_steps)], 0)
-    segment_ids = tf.concat([segment_ids[:1], tf.random_shuffle(segment_ids[1:], seed=num_train_steps)], 0)
-    input_mask = tf.concat([input_mask[:1], tf.random_shuffle(input_mask[1:], seed=num_train_steps)], 0)
-    mention_ids = tf.concat([mention_ids[:1], tf.random_shuffle(mention_ids[1:], seed=num_train_steps)], 0)
-    word_ids = tf.concat([word_ids[:1], tf.random_shuffle(word_ids[1:], seed=num_train_steps)], 0)
+    #input_ids = tf.concat([input_ids[:1], tf.random_shuffle(input_ids[1:], seed=num_train_steps)], 0)
+    #segment_ids = tf.concat([segment_ids[:1], tf.random_shuffle(segment_ids[1:], seed=num_train_steps)], 0)
+    #input_mask = tf.concat([input_mask[:1], tf.random_shuffle(input_mask[1:], seed=num_train_steps)], 0)
+    #mention_ids = tf.concat([mention_ids[:1], tf.random_shuffle(mention_ids[1:], seed=num_train_steps)], 0)
+    #word_ids = tf.concat([word_ids[:1], tf.random_shuffle(word_ids[1:], seed=num_train_steps)], 0)
 
-    input_ids = input_ids[:16]
-    segment_ids = segment_ids[:16]
-    input_mask = input_mask[:16]
-    mention_ids = mention_ids[:16]
-    word_ids = word_ids[:16]
+    #input_ids = input_ids[:16]
+    #segment_ids = segment_ids[:16]
+    #input_mask = input_mask[:16]
+    #mention_ids = mention_ids[:16]
+    #word_ids = word_ids[:16]
     # ------------------------------------------
 
     random_mask = tf.random_uniform(input_ids.shape)
@@ -343,12 +343,14 @@ def create_zeshel_model(bert_config, is_training, input_ids, input_mask,
 
     logits = tf.matmul(output_layer, output_weights, transpose_b=True)
     logits = tf.nn.bias_add(logits, output_bias)
+
+    num_labels = 64
     logits = tf.reshape(logits, [-1, num_labels])
 
     probabilities = tf.nn.softmax(logits, axis=-1)
 
     per_example_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
-        logits=tf.reshape(logits,[-1, 16])[:1], labels=labels)
+        logits=logits, labels=labels)
 
     loss = tf.reduce_mean(per_example_loss)
 
