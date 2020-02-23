@@ -184,6 +184,16 @@ def file_based_input_fn_builder(input_file, num_cands, seq_length, is_training,
     """The actual input function."""
     batch_size = params["batch_size"]
 
+
+
+    d = tf.data.TFRecordDataset(input_file)
+    d = d.repeat()
+    d = d.apply(
+        tf.data.experimental.map_and_batch(
+            lambda record: _decode_record(record, name_to_features),
+            batch_size=batch_size,
+            drop_remainder=drop_remainder))
+
     # # For training, we want a lot of parallel reading and shuffling.
     # # For eval, we want no shuffling and parallel reading doesn't matter.
     # if len(input_file) > 1:
@@ -198,47 +208,47 @@ def file_based_input_fn_builder(input_file, num_cands, seq_length, is_training,
     #   d = d.shuffle(buffer_size=100)
 
 
-    if is_training:
-      num_cpu_threads = len(input_file)
+    # if is_training:
+    #   num_cpu_threads = len(input_file)
 
-      d = tf.data.Dataset.from_tensor_slices(tf.constant(input_file))
-      d = d.repeat(int(FLAGS.num_train_epochs))
-      #d = d.shuffle(buffer_size=len(input_file))
+    #   d = tf.data.Dataset.from_tensor_slices(tf.constant(input_file))
+    #   d = d.repeat(int(FLAGS.num_train_epochs))
+    #   #d = d.shuffle(buffer_size=len(input_file))
 
-      # `cycle_length` is the number of parallel files that get read.
-      cycle_length = num_cpu_threads
+    #   # `cycle_length` is the number of parallel files that get read.
+    #   cycle_length = num_cpu_threads
 
-      # `sloppy` mode means that the interleaving is not exact. This adds
-      # even more randomness to the training pipeline.
-      # d = d.apply(
-      #     tf.data.experimental.parallel_interleave(
-      #         tf.data.TFRecordDataset,
-      #         sloppy=is_training,
-      #         cycle_length=cycle_length))
-      d = d.apply(
-          tf.data.experimental.parallel_interleave(
-              tf.data.TFRecordDataset,
-              sloppy=False,
-              cycle_length=cycle_length))
-      #d = d.shuffle(buffer_size=1000)
+    #   # `sloppy` mode means that the interleaving is not exact. This adds
+    #   # even more randomness to the training pipeline.
+    #   # d = d.apply(
+    #   #     tf.data.experimental.parallel_interleave(
+    #   #         tf.data.TFRecordDataset,
+    #   #         sloppy=is_training,
+    #   #         cycle_length=cycle_length))
+    #   d = d.apply(
+    #       tf.data.experimental.parallel_interleave(
+    #           tf.data.TFRecordDataset,
+    #           sloppy=False,
+    #           cycle_length=cycle_length))
+    #   #d = d.shuffle(buffer_size=1000)
 
-      d = d.apply(
-          tf.data.experimental.map_and_batch(
-              lambda record: _decode_record(record, name_to_features),
-              batch_size=batch_size,
-              num_parallel_batches=num_cpu_threads,
-              drop_remainder=drop_remainder))
-    else:
-      d = tf.data.TFRecordDataset(input_file)
-      # Since we evaluate for a fixed number of steps we don't want to encounter
-      # out-of-range exceptions.
-      d = d.repeat()
+    #   d = d.apply(
+    #       tf.data.experimental.map_and_batch(
+    #           lambda record: _decode_record(record, name_to_features),
+    #           batch_size=batch_size,
+    #           num_parallel_batches=num_cpu_threads,
+    #           drop_remainder=drop_remainder))
+    # else:
+    #   d = tf.data.TFRecordDataset(input_file)
+    #   # Since we evaluate for a fixed number of steps we don't want to encounter
+    #   # out-of-range exceptions.
+    #   d = d.repeat()
 
-      d = d.apply(
-          tf.data.experimental.map_and_batch(
-              lambda record: _decode_record(record, name_to_features),
-              batch_size=batch_size,
-              drop_remainder=drop_remainder))
+    #   d = d.apply(
+    #       tf.data.experimental.map_and_batch(
+    #           lambda record: _decode_record(record, name_to_features),
+    #           batch_size=batch_size,
+    #           drop_remainder=drop_remainder))
 
     return d
 
