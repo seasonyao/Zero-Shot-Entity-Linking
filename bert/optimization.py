@@ -17,7 +17,7 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
-from tensorpack.tfutils.optimizer import AccumGradOptimizer
+#from tensorpack.tfutils.optimizer import AccumGradOptimizer
 
 import re
 import tensorflow as tf
@@ -65,7 +65,7 @@ def create_optimizer(loss, init_lr, num_train_steps, num_warmup_steps, use_tpu):
       epsilon=1e-6,
       exclude_from_weight_decay=["LayerNorm", "layer_norm", "bias"])
 
-  optimizer = AccumGradOptimizer(optimizer, niter=4)
+  #optimizer = AccumGradOptimizer(optimizer, niter=4)
 
   if use_tpu:
     optimizer = tf.contrib.tpu.CrossShardOptimizer(optimizer)

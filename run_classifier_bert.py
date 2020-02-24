@@ -205,7 +205,7 @@ def file_based_input_fn_builder(input_file, num_cands, seq_length, is_training,
 
     # if is_training:
     #   d = d.repeat()
-    #   d = d.shuffle(buffer_size=100)
+    #   d = d.shuffle(buffer_size=100, reshuffle_each_iteration=True)
 
 
     # if is_training:

@@ -1,4 +1,4 @@
-1.关于position embedding的直接初始化方法的对比结果 1）不从bert里初始化 2）前512和后512分别初始化 3）将新的量看作是512的放大或者缩小版，根据一个token最可能和其左右两边最近的词有最相似的position embedding的原则进行init 4) 把从512开始的position都用512这个位置的值进行初始化 5）可以针对embedding position在src tar上专门进行position-pretrain，用position-pretrain的结果进行init
+1.关于position embedding的直接初始化方法的对比结果 1）不从bert里初始化 2）前512和后512分别初始化 3）用slide和512初始化数据的现在官方方法进行实验 4) 把从512开始的position都用512这个位置的值进行初始化 5）可以针对embedding position在src tar上专门进行position-pretrain，用position-pretrain的结果进行init
 
 
 
