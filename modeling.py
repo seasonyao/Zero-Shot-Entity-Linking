@@ -25,7 +25,8 @@ import math
 import re
 import six
 import tensorflow as tf
-import numpy
+import numpy as np
+from tensorflow.python import pywrap_tensorflow
 
 from bert.modeling import create_initializer, embedding_lookup, \
     create_attention_mask_from_input_mask, get_shape_list, transformer_model, \
@@ -246,7 +247,7 @@ def embedding_postprocessor(input_tensor,
   for key in var_to_shape_map:  
       if key == "bert/embeddings/position_embeddings":
           position_embedding_value = reader.get_tensor(key) # Remove this is you want to print only variable names  
-  position_embedding_512value = np.array(position_embedding[511]) * np.ones([512, 1])
+  position_embedding_512value = np.array(position_embedding_value[511] * np.ones([512, 1]), dtype=np.float32)
   #-----------------------------------------------------------
 
   if use_token_type:
@@ -311,7 +312,7 @@ def embedding_postprocessor(input_tensor,
             initializer=create_initializer(initializer_range))
         full_position_embeddings_latter = tf.get_variable(
             name=position_embedding_name+"_latter",
-            shape=[512, width],
+            #shape=[512, width],
             #initializer=create_initializer(initializer_range)
             initializer=position_embedding_512value)
 
@@ -328,12 +329,12 @@ def embedding_postprocessor(input_tensor,
             initializer=create_initializer(initializer_range))
         full_position_embeddings_second = tf.get_variable(
             name=position_embedding_name+"_second",
-            shape=[512, width],
+            #shape=[512, width],
             #initializer=create_initializer(initializer_range)
             initializer=position_embedding_512value)
         full_position_embeddings_third = tf.get_variable(
             name=position_embedding_name+"_third",
-            shape=[512, width],
+            #shape=[512, width],
             #initializer=create_initializer(initializer_range)
             initializer=position_embedding_512value)
 
