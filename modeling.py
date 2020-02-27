@@ -25,10 +25,12 @@ import math
 import re
 import six
 import tensorflow as tf
+import numpy
 
 from bert.modeling import create_initializer, embedding_lookup, \
     create_attention_mask_from_input_mask, get_shape_list, transformer_model, \
     layer_norm_and_dropout, get_activation
+
 
 
 class BertModel(object):
@@ -238,6 +240,15 @@ def embedding_postprocessor(input_tensor,
 
   output = input_tensor
 
+  #-----------------------------------------------------------
+  reader = pywrap_tensorflow.NewCheckpointReader("gs://cloud-tpu-checkpoints/bert/uncased_L-12_H-768_A-12/bert_model.ckpt")  
+  var_to_shape_map = reader.get_variable_to_shape_map()  
+  for key in var_to_shape_map:  
+      if key == "bert/embeddings/position_embeddings":
+          position_embedding_value = reader.get_tensor(key) # Remove this is you want to print only variable names  
+  position_embedding_512value = np.array(position_embedding[511]) * np.ones([512, 1])
+  #-----------------------------------------------------------
+
   if use_token_type:
     if token_type_ids is None:
       raise ValueError("`token_type_ids` must be specified if"
@@ -301,7 +312,8 @@ def embedding_postprocessor(input_tensor,
         full_position_embeddings_latter = tf.get_variable(
             name=position_embedding_name+"_latter",
             shape=[512, width],
-            initializer=create_initializer(initializer_range))
+            #initializer=create_initializer(initializer_range)
+            initializer=position_embedding_512value)
 
         full_position_embeddings_latter = tf.slice(full_position_embeddings_latter, [0, 0],
                                        [seq_length - 512, -1])
@@ -317,11 +329,13 @@ def embedding_postprocessor(input_tensor,
         full_position_embeddings_second = tf.get_variable(
             name=position_embedding_name+"_second",
             shape=[512, width],
-            initializer=create_initializer(initializer_range))
+            #initializer=create_initializer(initializer_range)
+            initializer=position_embedding_512value)
         full_position_embeddings_third = tf.get_variable(
             name=position_embedding_name+"_third",
             shape=[512, width],
-            initializer=create_initializer(initializer_range))
+            #initializer=create_initializer(initializer_range)
+            initializer=position_embedding_512value)
 
         full_position_embeddings_third = tf.slice(full_position_embeddings_third, [0, 0],
                                        [seq_length - 1024, -1])
