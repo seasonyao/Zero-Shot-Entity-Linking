@@ -317,8 +317,17 @@ def create_zeshel_model(bert_config, is_training, input_ids, input_mask,
     # tf.logging.info(labels.shape.as_list()) 
 
     #[64, 768]
+    #use in ws = 64, 128, 256, 384, 512, 768, 1024
     output_layer = tf.concat([real_output_layer[:1], real_output_layer[1:], real_output_layer[1:], 
                     real_output_layer[1:], real_output_layer[1:], real_output_layer[1:4]], 0)
+    #use in ws = 1280
+    # output_layer = tf.concat([real_output_layer[:1], real_output_layer[1:], real_output_layer[1:], 
+    #                 real_output_layer[1:], real_output_layer[1:], real_output_layer[1:], real_output_layer[1:],
+    #                 real_output_layer[1:4]], 0)
+    #use in ws = 1536
+    # output_layer = tf.concat([real_output_layer[:1], real_output_layer[1:], real_output_layer[1:], 
+    #                 real_output_layer[1:], real_output_layer[1:], real_output_layer[1:], real_output_layer[1:],
+    #                 real_output_layer[1:], real_output_layer[1:], real_output_layer[1:]], 0)
     #tf.logging.info(output_layer.shape.as_list()) 
 
     #assert 1==0
