@@ -137,7 +137,7 @@ flags.DEFINE_integer(
     "Number of training examples.")
 
 flags.DEFINE_float(
-    "mask_lm_rate", 0.0, 
+    "mask_lm_rate", 0.002, 
     "The initial learning rate for Adam.")
 
 flags.DEFINE_integer(
@@ -270,24 +270,11 @@ def create_zeshel_model(bert_config, is_training, input_ids, input_mask,
 
 
   if is_training:
-    # split-------------------------------------
     word_ids = tf.reshape(word_ids, [-1, seq_len])
 
-    #input_ids = tf.concat([input_ids[:1], tf.random_shuffle(input_ids[1:], seed=num_train_steps)], 0)
-    #segment_ids = tf.concat([segment_ids[:1], tf.random_shuffle(segment_ids[1:], seed=num_train_steps)], 0)
-    #input_mask = tf.concat([input_mask[:1], tf.random_shuffle(input_mask[1:], seed=num_train_steps)], 0)
-    #mention_ids = tf.concat([mention_ids[:1], tf.random_shuffle(mention_ids[1:], seed=num_train_steps)], 0)
-    #word_ids = tf.concat([word_ids[:1], tf.random_shuffle(word_ids[1:], seed=num_train_steps)], 0)
-
-    #input_ids = input_ids[:16]
-    #segment_ids = segment_ids[:16]
-    #input_mask = input_mask[:16]
-    #mention_ids = mention_ids[:16]
-    #word_ids = word_ids[:16]
-    # ------------------------------------------
-
     random_mask = tf.random_uniform(input_ids.shape)
-    masked_lm_positions = tf.cast(random_mask < FLAGS.mask_lm_rate, tf.int32)
+    #masked_lm_positions = tf.cast(random_mask < FLAGS.mask_lm_rate, tf.int32)
+    masked_lm_positions = tf.cast(random_mask < (FLAGS.mask_lm_rate*(num_train_steps%1000)), tf.int32)
     masked_lm_positions *= word_ids
     masked_lm_input_ids = masked_lm_positions * FLAGS.mask_word_id + (1 - masked_lm_positions) * input_ids
 
