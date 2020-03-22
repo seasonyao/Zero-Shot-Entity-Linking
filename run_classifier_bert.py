@@ -274,7 +274,7 @@ def create_zeshel_model(bert_config, is_training, input_ids, input_mask,
 
     random_mask = tf.random_uniform(input_ids.shape)
     #masked_lm_positions = tf.cast(random_mask < FLAGS.mask_lm_rate, tf.int32)
-    masked_lm_positions = tf.cast(random_mask < (FLAGS.mask_lm_rate*(num_train_steps%1000)), tf.int32)
+    masked_lm_positions = tf.cast(random_mask < (FLAGS.mask_lm_rate*(num_train_steps//1000)), tf.int32)
     masked_lm_positions *= word_ids
     masked_lm_input_ids = masked_lm_positions * FLAGS.mask_word_id + (1 - masked_lm_positions) * input_ids
 
