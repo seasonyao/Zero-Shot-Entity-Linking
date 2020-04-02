@@ -57,6 +57,10 @@ flags.DEFINE_string(
     "init_checkpoint", None,
     "Initial checkpoint (usually from a pre-trained BERT model).")
 
+flags.DEFINE_string(
+    "init_checkpoint_2", None,
+    "Initial checkpoint (usually from a pre-trained BERT model).")
+
 flags.DEFINE_bool(
     "do_lower_case", True,
     "Whether to lower case the input text. Should be True for uncased "
@@ -137,7 +141,7 @@ flags.DEFINE_integer(
     "Number of training examples.")
 
 flags.DEFINE_float(
-    "mask_lm_rate", 0.002, 
+    "mask_lm_rate", 0.0, 
     "The initial learning rate for Adam.")
 
 flags.DEFINE_integer(
@@ -187,7 +191,9 @@ def file_based_input_fn_builder(input_file, num_cands, seq_length, is_training,
 
 
     d = tf.data.TFRecordDataset(input_file, num_parallel_reads=None)
-    d = d.repeat()
+    if is_training:
+      d = d.repeat()
+
     d = d.apply(
         tf.data.experimental.map_and_batch(
             lambda record: _decode_record(record, name_to_features),
@@ -273,8 +279,8 @@ def create_zeshel_model(bert_config, is_training, input_ids, input_mask,
     word_ids = tf.reshape(word_ids, [-1, seq_len])
 
     random_mask = tf.random_uniform(input_ids.shape)
-    #masked_lm_positions = tf.cast(random_mask < FLAGS.mask_lm_rate, tf.int32)
-    masked_lm_positions = tf.cast(random_mask < (FLAGS.mask_lm_rate*(num_train_steps//1000)), tf.int32)
+    masked_lm_positions = tf.cast(random_mask < FLAGS.mask_lm_rate, tf.int32)
+    #masked_lm_positions = tf.cast(random_mask < (FLAGS.mask_lm_rate*(num_train_steps//1000)), tf.int32)
     masked_lm_positions *= word_ids
     masked_lm_input_ids = masked_lm_positions * FLAGS.mask_word_id + (1 - masked_lm_positions) * input_ids
 
@@ -396,49 +402,59 @@ def model_fn_builder(bert_config, init_checkpoint, learning_rate,
     tvars = tf.trainable_variables()
     initialized_variable_names = {}
     scaffold_fn = None
+    
     if init_checkpoint:
       (assignment_map, initialized_variable_names
       ) = bert.modeling.get_assignment_map_from_checkpoint(tvars, init_checkpoint)
+      (assignment_map_2, initialized_variable_names_2
+      ) = bert.modeling.get_assignment_map_from_checkpoint_2(tvars, FLAGS.init_checkpoint_2)
       # (assignment_map, initialized_variable_names
       # ) = bert.modeling.get_assignment_map_from_checkpoint_for_larger_window_size(tvars, init_checkpoint)
       if use_tpu:
         def tpu_scaffold():
           tf.train.init_from_checkpoint(init_checkpoint, assignment_map)
-          if FLAGS.max_seq_length>1024:
-            pass
-            tf.train.init_from_checkpoint(init_checkpoint, {"bert/embeddings/position_embeddings": "bert/embeddings/position_embeddings_first"})
-            tf.train.init_from_checkpoint(init_checkpoint, {"bert/embeddings/position_embeddings": "bert/embeddings/position_embeddings_second"})
-            tf.train.init_from_checkpoint(init_checkpoint, {"bert/embeddings/position_embeddings": "bert/embeddings/position_embeddings_third"})
-          elif FLAGS.max_seq_length>512:
-            pass
-            tf.train.init_from_checkpoint(init_checkpoint, {"bert/embeddings/position_embeddings": "bert/embeddings/position_embeddings_former"})
-            tf.train.init_from_checkpoint(init_checkpoint, {"bert/embeddings/position_embeddings": "bert/embeddings/position_embeddings_latter"})
-          else:
-            pass
-            tf.train.init_from_checkpoint(init_checkpoint, {"bert/embeddings/position_embeddings": "bert/embeddings/position_embeddings"})
+          tf.train.init_from_checkpoint(FLAGS.init_checkpoint_2, assignment_map_2)
+          
+          # if FLAGS.max_seq_length>1024:
+          #   pass
+          #   tf.train.init_from_checkpoint(init_checkpoint, {"bert/embeddings/position_embeddings": "bert/embeddings/position_embeddings_first"})
+          #   tf.train.init_from_checkpoint(init_checkpoint, {"bert/embeddings/position_embeddings": "bert/embeddings/position_embeddings_second"})
+          #   tf.train.init_from_checkpoint(init_checkpoint, {"bert/embeddings/position_embeddings": "bert/embeddings/position_embeddings_third"})
+          # elif FLAGS.max_seq_length>512:
+          #   pass
+          #   tf.train.init_from_checkpoint(init_checkpoint, {"bert/embeddings/position_embeddings": "bert/embeddings/position_embeddings_former"})
+          #   tf.train.init_from_checkpoint(init_checkpoint, {"bert/embeddings/position_embeddings": "bert/embeddings/position_embeddings_latter"})
+          # else:
+          #   pass
+          #   tf.train.init_from_checkpoint(init_checkpoint, {"bert/embeddings/position_embeddings": "bert/embeddings/position_embeddings"})
           return tf.train.Scaffold()
 
         scaffold_fn = tpu_scaffold
       else:
         tf.train.init_from_checkpoint(init_checkpoint, assignment_map)
-        if FLAGS.max_seq_length>1024:
-          pass
-          tf.train.init_from_checkpoint(init_checkpoint, {"bert/embeddings/position_embeddings": "bert/embeddings/position_embeddings_first"})
-          tf.train.init_from_checkpoint(init_checkpoint, {"bert/embeddings/position_embeddings": "bert/embeddings/position_embeddings_second"})
-          tf.train.init_from_checkpoint(init_checkpoint, {"bert/embeddings/position_embeddings": "bert/embeddings/position_embeddings_third"})
-        if FLAGS.max_seq_length>512:
-          pass
-          tf.train.init_from_checkpoint(init_checkpoint, {"bert/embeddings/position_embeddings": "bert/embeddings/position_embeddings_former"})
-          tf.train.init_from_checkpoint(init_checkpoint, {"bert/embeddings/position_embeddings": "bert/embeddings/position_embeddings_latter"})
-        else:
-          pass
-          tf.train.init_from_checkpoint(init_checkpoint, {"bert/embeddings/position_embeddings": "bert/embeddings/position_embeddings"})
+        tf.train.init_from_checkpoint(FLAGS.init_checkpoint_2, assignment_map_2)
+
+        # if FLAGS.max_seq_length>1024:
+        #   pass
+        #   tf.train.init_from_checkpoint(init_checkpoint, {"bert/embeddings/position_embeddings": "bert/embeddings/position_embeddings_first"})
+        #   tf.train.init_from_checkpoint(init_checkpoint, {"bert/embeddings/position_embeddings": "bert/embeddings/position_embeddings_second"})
+        #   tf.train.init_from_checkpoint(init_checkpoint, {"bert/embeddings/position_embeddings": "bert/embeddings/position_embeddings_third"})
+        # if FLAGS.max_seq_length>512:
+        #   pass
+        #   tf.train.init_from_checkpoint(init_checkpoint, {"bert/embeddings/position_embeddings": "bert/embeddings/position_embeddings_former"})
+        #   tf.train.init_from_checkpoint(init_checkpoint, {"bert/embeddings/position_embeddings": "bert/embeddings/position_embeddings_latter"})
+        # else:
+        #   pass
+        #   tf.train.init_from_checkpoint(init_checkpoint, {"bert/embeddings/position_embeddings": "bert/embeddings/position_embeddings"})
+
 
     tf.logging.info("**** Trainable Variables ****")
     for var in tvars:
       init_string = ""
       if var.name in initialized_variable_names:
         init_string = ", *INIT_FROM_CKPT*"
+      if var.name in initialized_variable_names_2:
+        init_string += ", *INIT_FROM_CKPT_2*"
       tf.logging.info("  name = %s, shape = %s%s", var.name, var.shape,
                       init_string)
 
@@ -529,7 +545,7 @@ def main(_):
       model_dir=FLAGS.output_dir,
       save_checkpoints_steps=FLAGS.save_checkpoints_steps,
       save_summary_steps=100,
-      keep_checkpoint_max=10,
+      keep_checkpoint_max=20,
       tpu_config=tf.estimator.tpu.TPUConfig(
           iterations_per_loop=FLAGS.iterations_per_loop,
           per_host_input_for_training=is_per_host))
