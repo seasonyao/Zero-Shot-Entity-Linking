@@ -401,6 +401,7 @@ def model_fn_builder(bert_config, init_checkpoint, learning_rate,
 
     tvars = tf.trainable_variables()
     initialized_variable_names = {}
+    initialized_variable_names_2 = {}
     scaffold_fn = None
     
     if init_checkpoint:
