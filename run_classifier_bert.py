@@ -57,9 +57,9 @@ flags.DEFINE_string(
     "init_checkpoint", None,
     "Initial checkpoint (usually from a pre-trained BERT model).")
 
-flags.DEFINE_string(
-    "init_checkpoint_2", None,
-    "Initial checkpoint (usually from a pre-trained BERT model).")
+# flags.DEFINE_string(
+#     "init_checkpoint_2", None,
+#     "Initial checkpoint (usually from a pre-trained BERT model).")
 
 flags.DEFINE_bool(
     "do_lower_case", True,
@@ -401,20 +401,20 @@ def model_fn_builder(bert_config, init_checkpoint, learning_rate,
 
     tvars = tf.trainable_variables()
     initialized_variable_names = {}
-    initialized_variable_names_2 = {}
+    #initialized_variable_names_2 = {}
     scaffold_fn = None
     
     if init_checkpoint:
       (assignment_map, initialized_variable_names
       ) = bert.modeling.get_assignment_map_from_checkpoint(tvars, init_checkpoint)
-      (assignment_map_2, initialized_variable_names_2
-      ) = bert.modeling.get_assignment_map_from_checkpoint_2(tvars, FLAGS.init_checkpoint_2)
+      #(assignment_map_2, initialized_variable_names_2
+      #) = bert.modeling.get_assignment_map_from_checkpoint_2(tvars, FLAGS.init_checkpoint_2)
       # (assignment_map, initialized_variable_names
       # ) = bert.modeling.get_assignment_map_from_checkpoint_for_larger_window_size(tvars, init_checkpoint)
       if use_tpu:
         def tpu_scaffold():
           tf.train.init_from_checkpoint(init_checkpoint, assignment_map)
-          tf.train.init_from_checkpoint(FLAGS.init_checkpoint_2, assignment_map_2)
+          #tf.train.init_from_checkpoint(FLAGS.init_checkpoint_2, assignment_map_2)
           
           # if FLAGS.max_seq_length>1024:
           #   pass
@@ -433,7 +433,7 @@ def model_fn_builder(bert_config, init_checkpoint, learning_rate,
         scaffold_fn = tpu_scaffold
       else:
         tf.train.init_from_checkpoint(init_checkpoint, assignment_map)
-        tf.train.init_from_checkpoint(FLAGS.init_checkpoint_2, assignment_map_2)
+        #tf.train.init_from_checkpoint(FLAGS.init_checkpoint_2, assignment_map_2)
 
         # if FLAGS.max_seq_length>1024:
         #   pass
@@ -454,8 +454,8 @@ def model_fn_builder(bert_config, init_checkpoint, learning_rate,
       init_string = ""
       if var.name in initialized_variable_names:
         init_string = ", *INIT_FROM_CKPT*"
-      if var.name in initialized_variable_names_2:
-        init_string += ", *INIT_FROM_CKPT_2*"
+      # if var.name in initialized_variable_names_2:
+      #   init_string += ", *INIT_FROM_CKPT_2*"
       tf.logging.info("  name = %s, shape = %s%s", var.name, var.shape,
                       init_string)
 
