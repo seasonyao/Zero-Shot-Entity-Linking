@@ -82,7 +82,7 @@ def create_optimizer(loss, init_lr, num_train_steps, num_warmup_steps, use_tpu):
     if name.startswith('bert/embedding/'):
       continue
 
-    tvars_tmp.append(var)
+    tvars.append(var)
 
   # all pretrained weights inside BERT starts with 'bert'
   #tvars = [tvar for tvar in tvars if not tvar.name.startswith('bert')]
