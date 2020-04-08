@@ -328,6 +328,8 @@ def get_assignment_map_from_checkpoint(tvars, init_checkpoint):
 
     if name == "bert/embeddings/position_embeddings":
      continue
+
+    name_to_variable[name] = var
     # if name.startswith('bert/encoder/'):
     #   name_to_variable[name] = var
     # if name.startswith('bert/pooler/'):

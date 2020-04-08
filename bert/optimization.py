@@ -79,7 +79,7 @@ def create_optimizer(loss, init_lr, num_train_steps, num_warmup_steps, use_tpu):
     if m is not None:
       name = m.group(1)
 
-    if name.startswith('bert/embedding/'):
+    if name.startswith('bert/embeddings/'):
       continue
 
     tvars.append(var)
