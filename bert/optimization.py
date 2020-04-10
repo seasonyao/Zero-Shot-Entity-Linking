@@ -70,19 +70,19 @@ def create_optimizer(loss, init_lr, num_train_steps, num_warmup_steps, use_tpu):
   if use_tpu:
     optimizer = tf.contrib.tpu.CrossShardOptimizer(optimizer)
 
-  tvars_tmp = tf.trainable_variables()
-  tvars = []
+  tvars = tf.trainable_variables()
+  #tvars = []
 
-  for var in tvars_tmp:
-    name = var.name
-    m = re.match("^(.*):\\d+$", name)
-    if m is not None:
-      name = m.group(1)
+  #for var in tvars_tmp:
+  #  name = var.name
+  #  m = re.match("^(.*):\\d+$", name)
+  #  if m is not None:
+  #    name = m.group(1)
 
-    if name.startswith('bert/embeddings/'):
-      continue
+  #  if name.startswith('bert/embeddings/'):
+  #    continue
 
-    tvars.append(var)
+  #  tvars.append(var)
 
   # all pretrained weights inside BERT starts with 'bert'
   #tvars = [tvar for tvar in tvars if not tvar.name.startswith('bert')]
