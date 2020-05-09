@@ -326,8 +326,8 @@ def get_assignment_map_from_checkpoint(tvars, init_checkpoint):
     if m is not None:
       name = m.group(1)
 
-    #if name == "bert/embeddings/position_embeddings":
-    # continue
+    if name == "bert/embeddings/position_embeddings":
+      continue
 
     name_to_variable[name] = var
     # if name.startswith('bert/encoder/'):
