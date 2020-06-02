@@ -415,38 +415,42 @@ def model_fn_builder(bert_config, init_checkpoint, learning_rate,
         def tpu_scaffold():
           tf.train.init_from_checkpoint(init_checkpoint, assignment_map)
           #tf.train.init_from_checkpoint(FLAGS.init_checkpoint_2, assignment_map_2)
+          #gs://zero_shot_entity_link/final_model/pretrain/ms384384/train_data/BERT_srclm/model.ckpt-20000
           
           if FLAGS.max_seq_length>1024:
             pass
-            tf.train.init_from_checkpoint(init_checkpoint, {"bert/embeddings/position_embeddings": "bert/embeddings/position_embeddings_first"})
-            #tf.train.init_from_checkpoint(init_checkpoint, {"bert/embeddings/position_embeddings": "bert/embeddings/position_embeddings_second"})
-            #tf.train.init_from_checkpoint(init_checkpoint, {"bert/embeddings/position_embeddings": "bert/embeddings/position_embeddings_third"})
+            tf.train.init_from_checkpoint(init_checkpoint2, {"bert/embeddings/position_embeddings_first": "bert/embeddings/position_embeddings_first"})
+            tf.train.init_from_checkpoint(init_checkpoint2, {"bert/embeddings/position_embeddings_second": "bert/embeddings/position_embeddings_second"})
+            tf.train.init_from_checkpoint(init_checkpoint2, {"bert/embeddings/position_embeddings_third": "bert/embeddings/position_embeddings_third"})
+            tf.train.init_from_checkpoint(init_checkpoint2, {"bert/embeddings/large_window_size_position_embeddings": "bert/embeddings/large_window_size_position_embeddings"})
           elif FLAGS.max_seq_length>512:
             pass
-            tf.train.init_from_checkpoint(init_checkpoint, {"bert/embeddings/position_embeddings": "bert/embeddings/position_embeddings_former"})
-            #tf.train.init_from_checkpoint(init_checkpoint, {"bert/embeddings/position_embeddings": "bert/embeddings/position_embeddings_latter"})
+            tf.train.init_from_checkpoint(init_checkpoint2, {"bert/embeddings/position_embeddings_former": "bert/embeddings/position_embeddings_former"})
+            tf.train.init_from_checkpoint(init_checkpoint2, {"bert/embeddings/position_embeddings_latter": "bert/embeddings/position_embeddings_latter"})
+            tf.train.init_from_checkpoint(init_checkpoint2, {"bert/embeddings/large_window_size_position_embeddings": "bert/embeddings/large_window_size_position_embeddings"})
           else:
             pass
-            tf.train.init_from_checkpoint(init_checkpoint, {"bert/embeddings/position_embeddings": "bert/embeddings/position_embeddings"})
+            tf.train.init_from_checkpoint(init_checkpoint2, {"bert/embeddings/position_embeddings": "bert/embeddings/position_embeddings"})
           return tf.train.Scaffold()
 
         scaffold_fn = tpu_scaffold
       else:
         tf.train.init_from_checkpoint(init_checkpoint, assignment_map)
         #tf.train.init_from_checkpoint(FLAGS.init_checkpoint_2, assignment_map_2)
-
         if FLAGS.max_seq_length>1024:
           pass
-          tf.train.init_from_checkpoint(init_checkpoint, {"bert/embeddings/position_embeddings": "bert/embeddings/position_embeddings_first"})
-          #tf.train.init_from_checkpoint(init_checkpoint, {"bert/embeddings/position_embeddings": "bert/embeddings/position_embeddings_second"})
-          #tf.train.init_from_checkpoint(init_checkpoint, {"bert/embeddings/position_embeddings": "bert/embeddings/position_embeddings_third"})
+          tf.train.init_from_checkpoint(init_checkpoint2, {"bert/embeddings/position_embeddings_first": "bert/embeddings/position_embeddings_first"})
+          tf.train.init_from_checkpoint(init_checkpoint2, {"bert/embeddings/position_embeddings_second": "bert/embeddings/position_embeddings_second"})
+          tf.train.init_from_checkpoint(init_checkpoint2, {"bert/embeddings/position_embeddings_third": "bert/embeddings/position_embeddings_third"})
+          tf.train.init_from_checkpoint(init_checkpoint2, {"bert/embeddings/large_window_size_position_embeddings": "bert/embeddings/large_window_size_position_embeddings"})
         if FLAGS.max_seq_length>512:
           pass
-          tf.train.init_from_checkpoint(init_checkpoint, {"bert/embeddings/position_embeddings": "bert/embeddings/position_embeddings_former"})
-          #tf.train.init_from_checkpoint(init_checkpoint, {"bert/embeddings/position_embeddings": "bert/embeddings/position_embeddings_latter"})
+          tf.train.init_from_checkpoint(init_checkpoint2, {"bert/embeddings/position_embeddings_former": "bert/embeddings/position_embeddings_former"})
+          tf.train.init_from_checkpoint(init_checkpoint2, {"bert/embeddings/position_embeddings_latter": "bert/embeddings/position_embeddings_latter"})
+          tf.train.init_from_checkpoint(init_checkpoint2, {"bert/embeddings/large_window_size_position_embeddings": "bert/embeddings/large_window_size_position_embeddings"})
         else:
           pass
-          tf.train.init_from_checkpoint(init_checkpoint, {"bert/embeddings/position_embeddings": "bert/embeddings/position_embeddings"})
+          tf.train.init_from_checkpoint(init_checkpoint2, {"bert/embeddings/position_embeddings": "bert/embeddings/position_embeddings"})
 
 
     tf.logging.info("**** Trainable Variables ****")

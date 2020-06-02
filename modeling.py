@@ -316,6 +316,8 @@ def embedding_postprocessor(input_tensor,
             initializer=create_initializer(initializer_range))
             #initializer=position_embedding_512value)
 
+        #full_position_embeddings_latter += position_embedding_512value
+
         full_position_embeddings_latter = tf.slice(full_position_embeddings_latter, [0, 0],
                                        [seq_length - 512, -1])
 
