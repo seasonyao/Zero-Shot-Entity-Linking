@@ -1,8 +1,0 @@
-1.256 batch_size and 768 token pretrain会oom. so 用128的batch size
-
-2.一种新的训练方式：输入64个candidates，但是进入bert的只有16个，得到bert 16个的输出以后随机扩充成1+63=64的vector，就可以训练+测试64了。每次64选16都是随机的，保证model可以看到足够的信息。依旧需要增加gradient accumulate来对应batch size的影响。另外设计一种训练模式来预训练position embeddding layer
-
-3.实验内容：
-	1）baseline:没有任何附加操作，直接比较128、256、384、512、768、1024的表现。其中<512时候正常初始化embedding-position,>512为分别为前512和后512从init初始化embedding-position
-	2）验证数据多样性的影响：将每次都从前16candidate训练改为从64中抽取16数据进行训练，查看128、256、384、512、768、1024的表现
-	3）验证直接mask的效果：在2）的
